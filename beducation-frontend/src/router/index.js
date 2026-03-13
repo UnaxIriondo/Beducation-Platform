@@ -56,7 +56,7 @@ const routes = [
         component: () => import('../views/company/CompanyDashboardView.vue'),
         meta: { requiresAuth: true, role: 'COMPANY' }
     },
-    // Portal Administración
+    // Portal Admin
     {
         path: '/admin/dashboard',
         name: 'AdminDashboard',
