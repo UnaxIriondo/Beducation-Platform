@@ -6,11 +6,15 @@
         <p class="text-slate-500">Gestione alumnos, invitaciones y aprobaciones de prácticas en el extranjero.</p>
       </div>
       <div class="mt-4 md:mt-0 space-x-3 flex items-center">
+        <router-link to="/school/profile/edit" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium text-sm rounded-lg transition-colors flex items-center gap-2 border border-slate-200">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          Editar Perfil
+        </router-link>
         <button @click="openInviteModal" class="btn-secondary text-sm px-4 py-2 flex items-center gap-2">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
           + Nuevo Alumno (1 a 1)
         </button>
-        <button @click="fileInput.click()" class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
+        <button @click="showImportModal = true" class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
           Importar estudiantes (.csv)
         </button>
@@ -122,6 +126,62 @@
       </div>
     </div>
 
+    <!-- Modal Importación CSV -->
+    <div v-if="showImportModal" class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="text-lg font-bold text-slate-800">Importar Alumnos desde CSV</h3>
+          <button @click="closeImportModal" class="text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-200 rounded-full p-1 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <p class="text-sm text-slate-600 mb-4">
+            Para subir estudiantes usando un archivo <span class="font-bold">.csv</span>, asegúrese de que el archivo contiene las siguientes columnas en la primera fila (cabecera):
+          </p>
+          
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5 overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr class="text-slate-700">
+                  <th class="pb-2 font-bold pr-4">firstName</th>
+                  <th class="pb-2 font-bold pr-4">lastName</th>
+                  <th class="pb-2 font-bold pr-4">email</th>
+                  <th class="pb-2 font-bold">educationType</th>
+                </tr>
+              </thead>
+              <tbody class="text-slate-500 font-mono text-xs">
+                <tr>
+                  <td class="pt-2 border-t border-slate-200 pr-4">Juan</td>
+                  <td class="pt-2 border-t border-slate-200 pr-4">Pérez</td>
+                  <td class="pt-2 border-t border-slate-200 pr-4">juan@ejemplo.com</td>
+                  <td class="pt-2 border-t border-slate-200">FP_HIGH</td>
+                </tr>
+                <tr>
+                  <td class="pt-1 pr-4">María</td>
+                  <td class="pt-1 pr-4">García</td>
+                  <td class="pt-1 pr-4">maria@ejemplo.com</td>
+                  <td class="pt-1">UNIVERSITY</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="text-xs text-slate-500 mb-6">
+            <span class="font-bold">Nota:</span> Los valores de <code class="bg-slate-100 px-1 rounded">educationType</code> pueden ser: FP_HIGH, UNIVERSITY, BOOTCAMP, etc., o dejarse en blanco.
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <button @click="closeImportModal" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200">Cancelar</button>
+            <button @click="triggerFileInput" class="btn-primary text-sm px-6 py-2 flex items-center gap-2">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              Seleccionar archivo .csv
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Progreso (Funnel) -->
     <div v-if="showFunnelModal" class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
@@ -205,6 +265,7 @@ const authStore = useAuthStore();
 const students = ref([]);
 const fileInput = ref(null);
 const showInviteModal = ref(false);
+const showImportModal = ref(false);
 const isInviting = ref(false);
 
 const newStudent = ref({
@@ -279,6 +340,14 @@ const openFunnelModal = (student) => {
     showFunnelModal.value = true;
 };
 
+const closeImportModal = () => {
+    showImportModal.value = false;
+};
+
+const triggerFileInput = () => {
+    fileInput.value.click();
+};
+
 const uploadCsv = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -297,6 +366,7 @@ const uploadCsv = async (event) => {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert(`Éxito. Se importaron e invitaron ${res.length} alumnos.`);
+        showImportModal.value = false;
         window.location.reload();
     } catch (e) {
         alert(`Error procesando CSV: ${e.message}`);

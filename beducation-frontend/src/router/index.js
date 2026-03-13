@@ -49,6 +49,12 @@ const routes = [
         component: () => import('../views/school/SchoolDashboardView.vue'),
         meta: { requiresAuth: true, role: 'SCHOOL' }
     },
+    {
+        path: '/school/profile/edit',
+        name: 'SchoolProfileEdit',
+        component: () => import('../views/school/SchoolProfileEditView.vue'),
+        meta: { requiresAuth: true, role: 'SCHOOL' }
+    },
     // Portal Empresa
     {
         path: '/company/dashboard',
