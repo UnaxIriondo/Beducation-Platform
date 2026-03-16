@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col items-center justify-center text-center space-y-6 animate-fade-in py-16">
+    <!--
     <div class="max-w-3xl mx-auto space-y-8 glass-card p-12 rounded-3xl relative overflow-hidden">
-      <!-- Decoración animada interna -->
       <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50"></div>
       
       <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
@@ -14,7 +14,6 @@
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-        <!-- Call to actions con hover estético -->
         <button v-if="!authStore.isAuthenticated" @click="mockLogin('STUDENT')" class="btn-primary px-8 py-4 text-lg w-full sm:w-auto hover-scale shadow-primary-500/30">
           Soy Estudiante
         </button>
@@ -27,6 +26,7 @@
         </button>
       </div>
     </div>
+    -->
     
     <!-- Sección Features Rápida -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-20 px-4">

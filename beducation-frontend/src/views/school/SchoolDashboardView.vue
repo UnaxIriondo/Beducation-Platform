@@ -25,12 +25,16 @@
 
     <!-- Pestañas: Alumnos (Perfil | Track App) & Validation (Etapa 4->5) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white p-4 rounded-xl border border-rose-100 flex items-center justify-between shadow-sm">
+        <div @click="openValidationModal" class="bg-white p-4 rounded-xl border border-rose-100 flex items-center justify-between shadow-sm cursor-pointer hover:bg-rose-50/30 transition-colors">
             <div>
                  <p class="text-sm text-slate-500 font-medium">Validación Final</p>
-                 <p class="text-2xl font-bold text-slate-800">1</p>
+                 <p class="text-2xl font-bold text-slate-800">{{ pendingValidationsCount }}</p>
             </div>
-            <div class="bg-rose-50 text-rose-500 p-2 rounded-lg">
+            <div class="bg-rose-50 text-rose-500 p-2 rounded-lg relative">
+                <span v-if="pendingValidationsCount > 0" class="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                </span>
                 <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
         </div>
@@ -137,45 +141,76 @@
         </div>
         <div class="p-6">
           <p class="text-sm text-slate-600 mb-4">
-            Para subir estudiantes usando un archivo <span class="font-bold">.csv</span>, asegúrese de que el archivo contiene las siguientes columnas en la primera fila (cabecera):
+            Asegúrese de que el archivo contiene las siguientes columnas en la primera fila: <strong>firstName, lastName, email, educationType</strong>.
           </p>
-          
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5 overflow-x-auto">
-            <table class="w-full text-left text-sm whitespace-nowrap">
-              <thead>
-                <tr class="text-slate-700">
-                  <th class="pb-2 font-bold pr-4">firstName</th>
-                  <th class="pb-2 font-bold pr-4">lastName</th>
-                  <th class="pb-2 font-bold pr-4">email</th>
-                  <th class="pb-2 font-bold">educationType</th>
-                </tr>
-              </thead>
-              <tbody class="text-slate-500 font-mono text-xs">
-                <tr>
-                  <td class="pt-2 border-t border-slate-200 pr-4">Juan</td>
-                  <td class="pt-2 border-t border-slate-200 pr-4">Pérez</td>
-                  <td class="pt-2 border-t border-slate-200 pr-4">juan@ejemplo.com</td>
-                  <td class="pt-2 border-t border-slate-200">FP_HIGH</td>
-                </tr>
-                <tr>
-                  <td class="pt-1 pr-4">María</td>
-                  <td class="pt-1 pr-4">García</td>
-                  <td class="pt-1 pr-4">maria@ejemplo.com</td>
-                  <td class="pt-1">UNIVERSITY</td>
-                </tr>
-              </tbody>
-            </table>
+
+          <!-- Zona de Drag & Drop -->
+          <div 
+            v-if="!csvPreview.length"
+            class="border-2 border-dashed rounded-xl p-8 mb-6 text-center transition-colors flex flex-col items-center justify-center cursor-pointer"
+            :class="isDragging ? 'border-sky-500 bg-sky-50' : 'border-slate-300 hover:border-sky-400 hover:bg-slate-50'"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop"
+            @click="triggerFileInput"
+          >
+            <div class="h-12 w-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mb-3">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            </div>
+            <p class="text-slate-700 font-medium mb-1">Haz clic o arrastra un archivo .csv aquí</p>
+            <p class="text-xs text-slate-500">Tamaño máximo recomendado: 5MB</p>
           </div>
+
+          <!-- Vista previa del CSV -->
+          <div v-else class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-sm font-bold text-slate-700">Vista previa ({{ csvPreview.length }} registros detectados)</p>
+              <button @click="resetCsv" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Reemplazar archivo</button>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-0 overflow-x-auto max-h-60 overflow-y-auto">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-100 sticky top-0">
+                  <tr class="text-slate-700">
+                    <th class="py-2 px-4 font-bold border-b border-slate-200">#</th>
+                    <th class="py-2 px-4 font-bold border-b border-slate-200">firstName</th>
+                    <th class="py-2 px-4 font-bold border-b border-slate-200">lastName</th>
+                    <th class="py-2 px-4 font-bold border-b border-slate-200">email</th>
+                    <th class="py-2 px-4 font-bold border-b border-slate-200">educationType</th>
+                  </tr>
+                </thead>
+                <tbody class="text-slate-600 font-mono text-xs">
+                  <tr v-for="(row, idx) in csvPreview.slice(0, 5)" :key="idx" class="border-b border-slate-100 last:border-0 hover:bg-white">
+                    <td class="py-2 px-4 text-slate-400">{{ idx + 1 }}</td>
+                    <td class="py-2 px-4">{{ row.firstName }}</td>
+                    <td class="py-2 px-4">{{ row.lastName }}</td>
+                    <td class="py-2 px-4">{{ row.email }}</td>
+                    <td class="py-2 px-4">{{ row.educationType }}</td>
+                  </tr>
+                  <tr v-if="csvPreview.length > 5">
+                     <td colspan="5" class="py-2 px-4 text-center text-slate-400 italic">... y {{ csvPreview.length - 5 }} registros más</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-if="csvError" class="mt-2 text-sm text-rose-500 font-medium">{{ csvError }}</p>
+          </div>
+          
+
 
           <p class="text-xs text-slate-500 mb-6">
             <span class="font-bold">Nota:</span> Los valores de <code class="bg-slate-100 px-1 rounded">educationType</code> pueden ser: FP_HIGH, UNIVERSITY, BOOTCAMP, etc., o dejarse en blanco.
           </p>
 
-          <div class="flex justify-end gap-3">
+          <div class="flex justify-end gap-3 mt-4">
             <button @click="closeImportModal" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200">Cancelar</button>
-            <button @click="triggerFileInput" class="btn-primary text-sm px-6 py-2 flex items-center gap-2">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-              Seleccionar archivo .csv
+            <button 
+              @click="submitCsv" 
+              :disabled="!selectedFile || isImporting" 
+              class="btn-primary text-sm px-6 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isImporting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              {{ isImporting ? 'Importando...' : 'Confirmar Importación' }}
             </button>
           </div>
         </div>
@@ -253,11 +288,100 @@
          </div>
        </div>
     </div>
+
+    <!-- Modal Validación Final (Aprobar/Rechazar) -->
+    <div v-if="showValidationModal" class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">Validación Final de Prácticas</h3>
+            <p class="text-xs text-slate-500">Alumnos esperando firma del Learning Agreement (Etapa 4)</p>
+          </div>
+          <button @click="showValidationModal = false" class="text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-200 rounded-full p-1 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto">
+          <div v-if="studentsToValidate.length === 0" class="text-center py-12">
+            <div class="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h4 class="text-slate-600 font-medium">No hay alumnos pendientes de validación en este momento.</h4>
+          </div>
+
+          <div v-else class="space-y-4">
+            <div v-for="std in studentsToValidate" :key="std.id" class="bg-white border text-sm border-slate-200 rounded-xl p-5 shadow-sm">
+              <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold">
+                    {{ (std.firstName?.charAt(0) || '') + (std.lastName?.charAt(0) || '') }}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-800">{{ std.firstName }} {{ std.lastName }}</h4>
+                    <p class="text-xs text-slate-500">{{ std.educationType?.code || 'CFGS' }} · {{ std.invitationEmail }}</p>
+                  </div>
+                </div>
+                
+                <div class="bg-amber-50 rounded-lg p-3 border border-amber-100 flex-1 md:mx-4">
+                  <p class="text-xs text-amber-800 font-medium flex items-center gap-1 mb-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                    Propuesta de Prácticas
+                  </p>
+                  <p class="text-xs text-slate-600 truncate max-w-[200px] md:max-w-none">
+                    <strong>Empresa:</strong> TechCorp Ireland Ltd.<br>
+                    <strong>Puesto:</strong> Junior Frontend Developer<br>
+                    <strong>Fechas:</strong> 01/09/2026 - 30/11/2026
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2 justify-end">
+                  <button @click="confirmAction(std, 'REJECT')" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-lg transition-colors">
+                    Rechazar
+                  </button>
+                  <button @click="confirmAction(std, 'APPROVE')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Aprobar Acuerdo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Confirmación de Acción (Validación) -->
+    <div v-if="actionConfirm.show" class="fixed inset-0 z-[60] bg-slate-900/40 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+        <div class="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4" :class="actionConfirm.type === 'APPROVE' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'">
+            <svg v-if="actionConfirm.type === 'APPROVE'" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg v-else class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">
+          ¿{{ actionConfirm.type === 'APPROVE' ? 'Aprobar' : 'Rechazar' }} acuerdo?
+        </h3>
+        <p class="text-sm text-slate-500 mb-6">
+          Estás a punto de {{ actionConfirm.type === 'APPROVE' ? 'aprobar las prácticas de' : 'rechazar la propuesta de' }} <strong>{{ actionConfirm.student?.firstName }}</strong>.
+          <span v-if="actionConfirm.type === 'APPROVE'">Esto generará el Learning Agreement final.</span>
+          <span v-else>El alumno deberá buscar otra vacante.</span>
+        </p>
+
+        <textarea v-if="actionConfirm.type === 'REJECT'" v-model="actionConfirm.reason" placeholder="Motivo del rechazo (obligatorio)..." class="w-full text-sm border-slate-200 rounded-lg p-3 mb-4 focus:ring-rose-500 focus:border-rose-500"></textarea>
+
+        <div class="flex gap-3 justify-center">
+          <button @click="actionConfirm.show = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200">Cancelar</button>
+          <button @click="executeAction" :disabled="isProcessingAction || (actionConfirm.type === 'REJECT' && !actionConfirm.reason)" :class="actionConfirm.type === 'APPROVE' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-rose-500 hover:bg-rose-600 text-white'" class="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-50">
+            {{ isProcessingAction ? 'Procesando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
 
@@ -267,6 +391,12 @@ const fileInput = ref(null);
 const showInviteModal = ref(false);
 const showImportModal = ref(false);
 const isInviting = ref(false);
+
+const isDragging = ref(false);
+const isImporting = ref(false);
+const selectedFile = ref(null);
+const csvPreview = ref([]);
+const csvError = ref('');
 
 const newStudent = ref({
     firstName: '',
@@ -279,13 +409,28 @@ const newStudent = ref({
 const showFunnelModal = ref(false);
 const selectedStudent = ref(null);
 
+// Modales Validation
+const showValidationModal = ref(false);
+const actionConfirm = ref({ show: false, student: null, type: '', reason: '' });
+const isProcessingAction = ref(false);
+
 const mockSchoolId = 20;
+
+const pendingValidationsCount = computed(() => {
+    return studentsToValidate.value.length;
+});
+
+const studentsToValidate = computed(() => {
+    // Retorna alumnos que estén en un estado específico (mock = stage4)
+    return students.value.filter(s => s.stage === 4);
+});
 
 onMounted(() => {
     // Simulamos la respuesta de GET /schools/{id}/students paginada
     students.value = [
-        { id: 1, firstName: 'Lucía', lastName: 'García', invitationEmail: 'alu.1@ies.es', profileComplete: true, educationType: { code: 'FP_HIGH' } },
-        { id: 2, firstName: 'Carlos', lastName: 'López', invitationEmail: 'alu.2@ies.es', profileComplete: false, educationType: null }
+        { id: 1, firstName: 'Lucía', lastName: 'García', invitationEmail: 'alu.1@ies.es', profileComplete: true, educationType: { code: 'FP_HIGH' }, stage: 2 },
+        { id: 2, firstName: 'Carlos', lastName: 'López', invitationEmail: 'alu.2@ies.es', profileComplete: false, educationType: null, stage: 1 },
+        { id: 3, firstName: 'Marta', lastName: 'Sánchez', invitationEmail: 'alu.3@ies.es', profileComplete: true, educationType: { code: 'UNIVERSITY' }, stage: 4 }
     ];
 });
 
@@ -342,37 +487,156 @@ const openFunnelModal = (student) => {
 
 const closeImportModal = () => {
     showImportModal.value = false;
+    resetCsv();
 };
 
 const triggerFileInput = () => {
     fileInput.value.click();
 };
 
-const uploadCsv = async (event) => {
+const handleDrop = (event) => {
+    isDragging.value = false;
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        processFileSelection(files[0]);
+    }
+};
+
+const uploadCsv = (event) => {
     const file = event.target.files[0];
-    if (!file) return;
-    
+    if (file) {
+        processFileSelection(file);
+    }
+    // Limpiamos value para permitir re-selección del mismo archivo
+    if (event.target) event.target.value = null;
+};
+
+const processFileSelection = (file) => {
+    csvError.value = '';
     // Validar tipo mimetype CSV básico
     if (file.type !== "text/csv" && file.name.split('.').pop() !== 'csv') {
-        alert("El archivo debe ser un .csv válido.");
+        csvError.value = "El archivo debe ser un .csv válido.";
+        selectedFile.value = null;
+        csvPreview.value = [];
         return;
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
+    selectedFile.value = file;
+    parseCSVPreview(file);
+};
 
+const parseCSVPreview = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        
+        if (lines.length <= 1) {
+            csvError.value = "El archivo CSV está vacío o no tiene datos.";
+            return;
+        }
+
+        const headers = lines[0].split(',').map(h => h.trim());
+        const expectedHeaders = ['firstName', 'lastName', 'email', 'educationType'];
+        
+        // Validación básica de cabeceras
+        const isValid = expectedHeaders.every(h => headers.includes(h));
+        // Relajar validación si al menos tiene email, pero para este mock, simularemos simple.
+        
+        const preview = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            if (values.length >= 3) {
+                preview.push({
+                    firstName: values[0] || '-',
+                    lastName: values[1] || '-',
+                    email: values[2] || '-',
+                    educationType: values[3] || '-'
+                });
+            }
+        }
+        csvPreview.value = preview;
+    };
+    reader.readAsText(file);
+};
+
+const resetCsv = () => {
+    selectedFile.value = null;
+    csvPreview.value = [];
+    csvError.value = '';
+};
+
+const submitCsv = async () => {
+    if (!selectedFile.value) return;
+
+    isImporting.value = true;
+    const formData = new FormData();
+    formData.append('file', selectedFile.value);
+
+    // Mock API simulation since backend is down
     try {
-        const res = await api.post(`/schools/${mockSchoolId}/import-students`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+        // const res = await api.post(`/schools/${mockSchoolId}/import-students`, formData, {
+        //     headers: { 'Content-Type': 'multipart/form-data' }
+        // });
+        await new Promise(r => setTimeout(r, 1200)); // Simulando carga
+        
+        // Add fake students to local list
+        csvPreview.value.forEach(row => {
+            students.value.push({
+                id: Date.now() + Math.random(),
+                firstName: row.firstName,
+                lastName: row.lastName,
+                invitationEmail: row.email,
+                profileComplete: false,
+                educationType: row.educationType !== '-' ? { code: row.educationType } : null,
+                stage: 1
+            });
         });
-        alert(`Éxito. Se importaron e invitaron ${res.length} alumnos.`);
-        showImportModal.value = false;
-        window.location.reload();
+
+        alert(`Éxito. Se simularon importar e invitar ${csvPreview.value.length} alumnos.`);
+        closeImportModal();
     } catch (e) {
         alert(`Error procesando CSV: ${e.message}`);
     } finally {
-        // Limpiamos la caché del file input para permitir re subidas
-        event.target.value = null; 
+        isImporting.value = false;
+    }
+};
+
+const openValidationModal = () => {
+    showValidationModal.value = true;
+};
+
+const confirmAction = (student, type) => {
+    actionConfirm.value = {
+        show: true,
+        student,
+        type,
+        reason: ''
+    };
+};
+
+const executeAction = async () => {
+    isProcessingAction.value = true;
+    try {
+        // Simulamos petición al backend
+        // await api.put(`/schools/placements/${actionConfirm.value.student.id}/${actionConfirm.value.type.toLowerCase()}`, { reason: actionConfirm.value.reason });
+        await new Promise(r => setTimeout(r, 800));
+        
+        // Actualizamos estado local mock
+        const index = students.value.findIndex(s => s.id === actionConfirm.value.student.id);
+        if (index !== -1) {
+            if (actionConfirm.value.type === 'APPROVE') {
+                students.value[index].stage = 5; // Pasa a stage final
+            } else {
+                students.value[index].stage = 3; // Vuelve a buscar empresa
+            }
+        }
+        
+        actionConfirm.value.show = false;
+    } catch (e) {
+        alert("Error al procesar la acción: " + e.message);
+    } finally {
+        isProcessingAction.value = false;
     }
 };
 </script>
