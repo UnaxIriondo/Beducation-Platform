@@ -27,8 +27,8 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/applications")
 @RequiredArgsConstructor
-@Tag(name = "Application Workflow Engine", description = "Endpoints de control que mueven el placement las 5 etapas entre Empleador y Candidato.",
-    security = @SecurityRequirement(name = "bearerAuth"))
+@Tag(name = "Application Workflow Engine", description = "Endpoints de control que mueven el placement las 5 etapas entre Empleador y Candidato.")
+@SecurityRequirement(name = "bearerAuth")
 public class ApplicationController {
 
     private final ApplicationService applicationService;

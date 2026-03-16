@@ -53,4 +53,8 @@ public class UserService {
         log.info("Usuario {} ({}) cambiado a estado {}", user.getId(), user.getEmail(), status);
         return userRepository.save(user);
     }
+    // En UserService.java — añade este método
+public boolean existsByEmail(String email) {
+    return userRepository.existsByEmail(email);
+}
 }

@@ -93,7 +93,7 @@ public class StudentService {
         Student student = studentRepository.findById(studentId)
             .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
 
-        String folder = "students/" + student.getAuth0Id() + "/docs";
+        String folder = "students/" + student.getId() + "/docs";
         String s3Key = s3StorageService.uploadFile(file, folder);
 
         StudentDocument document = StudentDocument.builder()

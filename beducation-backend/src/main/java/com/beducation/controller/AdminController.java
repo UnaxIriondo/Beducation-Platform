@@ -24,8 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin")
 @PreAuthorize("hasAuthority('SCOPE_ADMIN')") // o hasRole('ADMIN')
 @RequiredArgsConstructor
-@Tag(name = "Admin Portal", description = "Operaciones de la administración central de la plataforma Beducation.", 
-    security = @SecurityRequirement(name = "bearerAuth"))
+@Tag(name = "Admin")
+@SecurityRequirement(name = "bearer-key")
 public class AdminController {
 
     private final AdminService adminService;

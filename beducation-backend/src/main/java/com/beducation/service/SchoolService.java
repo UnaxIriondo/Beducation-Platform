@@ -104,7 +104,7 @@ public class SchoolService {
     public Student inviteStudent(Long schoolId, String firstName, String lastName, String email) {
         School school = getValidatedApprovedSchool(schoolId);
 
-        if (studentRepository.existsByInvitationEmail(email) || userService.userRepository.existsByEmail(email)) {
+        if (studentRepository.existsByInvitationEmail(email) || userService.existsByEmail(email)) {
             throw new IllegalStateException("El email " + email + " ya está invitado o registrado en la plataforma.");
         }
 
