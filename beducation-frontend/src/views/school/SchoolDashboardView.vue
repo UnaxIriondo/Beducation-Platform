@@ -41,7 +41,7 @@
         <div class="bg-white p-4 rounded-xl border border-sky-100 flex items-center justify-between shadow-sm">
              <div>
                  <p class="text-sm text-slate-500 font-medium">Estudiantes Registrados (Totales)</p>
-                 <p class="text-2xl font-bold text-slate-800">34</p>
+                 <p class="text-2xl font-bold text-slate-800">{{ students.length }}</p>
             </div>
         </div>
     </div>
@@ -381,7 +381,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
 
@@ -414,24 +414,45 @@ const showValidationModal = ref(false);
 const actionConfirm = ref({ show: false, student: null, type: '', reason: '' });
 const isProcessingAction = ref(false);
 
-const mockSchoolId = 20;
+const schoolId = computed(() => authStore.user?.id);
 
 const pendingValidationsCount = computed(() => {
     return studentsToValidate.value.length;
 });
 
-const studentsToValidate = computed(() => {
-    // Retorna alumnos que estén en un estado específico (mock = stage4)
-    return students.value.filter(s => s.stage === 4);
-});
+const studentsToValidate = ref([]);
 
-onMounted(() => {
-    // Simulamos la respuesta de GET /schools/{id}/students paginada
-    students.value = [
-        { id: 1, firstName: 'Lucía', lastName: 'García', invitationEmail: 'alu.1@ies.es', profileComplete: true, educationType: { code: 'FP_HIGH' }, stage: 2 },
-        { id: 2, firstName: 'Carlos', lastName: 'López', invitationEmail: 'alu.2@ies.es', profileComplete: false, educationType: null, stage: 1 },
-        { id: 3, firstName: 'Marta', lastName: 'Sánchez', invitationEmail: 'alu.3@ies.es', profileComplete: true, educationType: { code: 'UNIVERSITY' }, stage: 4 }
-    ];
+const fetchStudents = async () => {
+    if (!schoolId.value) {
+        console.warn("SchoolDashboard: Aborting fetchStudents due to missing schoolId");
+        return;
+    }
+    try {
+        console.log(`SchoolDashboard: Fetching students for school ${schoolId.value}...`);
+        const res = await api.get(`/schools/${schoolId.value}/students`);
+        students.value = (res && res.content) ? res.content : (Array.isArray(res) ? res : []);
+    } catch (e) {
+        console.error("Error fetching students:", e);
+    }
+};
+
+const fetchPendingApplications = async () => {
+    if (!schoolId.value) {
+        console.warn("SchoolDashboard: Aborting fetchPendingApplications due to missing schoolId");
+        return;
+    }
+    try {
+        const res = await api.get(`/schools/${schoolId.value}/pending-applications`);
+        studentsToValidate.value = (res && res.content) ? res.content : (Array.isArray(res) ? res : []);
+    } catch (e) {
+        console.error("Error fetching pending applications:", e);
+    }
+};
+
+onMounted(async () => {
+    if (authStore.user) {
+        await Promise.all([fetchStudents(), fetchPendingApplications()]);
+    }
 });
 
 const openInviteModal = () => {
@@ -444,25 +465,21 @@ const closeInviteModal = () => {
 };
 
 const submitInvite = async () => {
+    if (!schoolId.value) return;
     isInviting.value = true;
     try {
-        // Simulación API si es mock o real
-        // const res = await api.post(`/schools/${mockSchoolId}/invite-student`, newStudent.value);
-        await new Promise(r => setTimeout(r, 800)); // Simulando carga
-        
-        // Agregar estudiante a la lista local para ver el efecto inmediatamente
-        students.value.push({
-            id: Date.now(),
-            firstName: newStudent.value.firstName,
-            lastName: newStudent.value.lastName,
-            invitationEmail: newStudent.value.email,
-            profileComplete: false,
-            educationType: newStudent.value.educationType ? { code: newStudent.value.educationType } : null
+        await api.post(`/schools/${schoolId.value}/invite-student`, null, {
+            params: {
+                firstName: newStudent.value.firstName,
+                lastName: newStudent.value.lastName,
+                email: newStudent.value.email
+            }
         });
         
+        await fetchStudents();
         closeInviteModal();
     } catch (e) {
-        alert(`Error al invitar alumno: ${e.message}`);
+        alert(`Error al invitar alumno: ${e.response?.data?.message || e.message}`);
     } finally {
         isInviting.value = false;
     }
@@ -470,13 +487,12 @@ const submitInvite = async () => {
 
 const deleteStudent = async (studentId) => {
     if (!confirm('¿Estás seguro de que deseas eliminar a este alumno del directorio? Esta acción no se puede deshacer.')) return;
+    if (!schoolId.value) return;
     try {
-        // Simulación de borrado backend
-        // await api.delete(`/schools/${mockSchoolId}/students/${studentId}`);
-        await new Promise(r => setTimeout(r, 400));
+        await api.delete(`/schools/${schoolId.value}/students/${studentId}`);
         students.value = students.value.filter(s => s.id !== studentId);
     } catch (e) {
-        alert(`Error al eliminar alumno: ${e.message}`);
+        alert(`Error al eliminar alumno: ${e.response?.data?.message || e.message}`);
     }
 };
 
@@ -567,36 +583,22 @@ const resetCsv = () => {
 };
 
 const submitCsv = async () => {
-    if (!selectedFile.value) return;
+    if (!selectedFile.value || !schoolId.value) return;
 
     isImporting.value = true;
     const formData = new FormData();
     formData.append('file', selectedFile.value);
 
-    // Mock API simulation since backend is down
     try {
-        // const res = await api.post(`/schools/${mockSchoolId}/import-students`, formData, {
-        //     headers: { 'Content-Type': 'multipart/form-data' }
-        // });
-        await new Promise(r => setTimeout(r, 1200)); // Simulando carga
-        
-        // Add fake students to local list
-        csvPreview.value.forEach(row => {
-            students.value.push({
-                id: Date.now() + Math.random(),
-                firstName: row.firstName,
-                lastName: row.lastName,
-                invitationEmail: row.email,
-                profileComplete: false,
-                educationType: row.educationType !== '-' ? { code: row.educationType } : null,
-                stage: 1
-            });
+        await api.post(`/schools/${schoolId.value}/import-students`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
-
-        alert(`Éxito. Se simularon importar e invitar ${csvPreview.value.length} alumnos.`);
+        
+        await fetchStudents();
+        alert(`Éxito. Los alumnos del CSV han sido invitados.`);
         closeImportModal();
     } catch (e) {
-        alert(`Error procesando CSV: ${e.message}`);
+        alert(`Error procesando CSV: ${e.response?.data?.message || e.message}`);
     } finally {
         isImporting.value = false;
     }
@@ -616,27 +618,34 @@ const confirmAction = (student, type) => {
 };
 
 const executeAction = async () => {
+    if (!schoolId.value) return;
     isProcessingAction.value = true;
     try {
-        // Simulamos petición al backend
-        // await api.put(`/schools/placements/${actionConfirm.value.student.id}/${actionConfirm.value.type.toLowerCase()}`, { reason: actionConfirm.value.reason });
-        await new Promise(r => setTimeout(r, 800));
+        const type = actionConfirm.value.type.toLowerCase(); // 'approve' or 'reject'
+        const endpoint = `/applications/${actionConfirm.value.student.id}/school-${type}`;
         
-        // Actualizamos estado local mock
-        const index = students.value.findIndex(s => s.id === actionConfirm.value.student.id);
-        if (index !== -1) {
-            if (actionConfirm.value.type === 'APPROVE') {
-                students.value[index].stage = 5; // Pasa a stage final
-            } else {
-                students.value[index].stage = 3; // Vuelve a buscar empresa
+        await api.patch(endpoint, null, {
+            params: {
+                schoolId: schoolId.value,
+                reason: actionConfirm.value.reason || ''
             }
-        }
+        });
         
+        await fetchPendingApplications();
         actionConfirm.value.show = false;
     } catch (e) {
-        alert("Error al procesar la acción: " + e.message);
+        alert("Error al procesar la acción: " + (e.response?.data?.message || e.message));
     } finally {
         isProcessingAction.value = false;
     }
 };
+
+// Re-intentar carga si el user/id aparece después (útil en mocks o refrescos)
+watch(schoolId, (newId) => {
+    if (newId) {
+        console.log("SchoolDashboard: schoolId detected, fetching data...");
+        fetchStudents();
+        fetchPendingApplications();
+    }
+});
 </script>

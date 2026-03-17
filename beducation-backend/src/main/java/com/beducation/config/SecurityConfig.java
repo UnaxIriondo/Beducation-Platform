@@ -11,6 +11,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -114,10 +118,27 @@ public class SecurityConfig {
      * @return JwtDecoder configurado con validadores de Auth0
      */@Bean
 public JwtDecoder jwtDecoder() {
-    // Si es el placeholder de desarrollo, devuelve un decoder que no valida
+    // Si es el placeholder de desarrollo, devuelve un decoder que permite tokens de prueba
     if (issuerUri.contains("dev-placeholder")) {
         return token -> {
-            throw new org.springframework.security.oauth2.jwt.BadJwtException("Auth0 no configurado - modo desarrollo");
+            System.out.println("DEBUG: Recibido token para validar: " + token);
+            if ("mock-jwt-token".equals(token)) {
+                System.out.println("DEBUG: Validando token como MOCK-JWT-TOKEN");
+                // Generar un JWT Mock con todos los permisos (scopes) para facilitar desarrollo
+                Map<String, Object> headers = new HashMap<>();
+                headers.put("alg", "none");
+                
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("sub", "mock-user-123");
+                claims.put("iss", issuerUri);
+                claims.put("aud", Collections.singletonList(audience));
+                // Inyectamos todos los scopes posibles para que @PreAuthorize no falle en ningún dashboard
+                claims.put("scope", "SCHOOL COMPANY STUDENT ADMIN");
+                
+                return new Jwt(token, Instant.now(), Instant.now().plusSeconds(3600), headers, claims);
+            }
+            System.err.println("DEBUG ERROR: Token no reconocido: " + token);
+            throw new BadJwtException("Token no reconocido en modo desarrollo. Use 'mock-jwt-token'");
         };
     }
     NimbusJwtDecoder jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuerUri);

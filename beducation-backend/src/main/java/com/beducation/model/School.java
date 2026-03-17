@@ -2,6 +2,8 @@ package com.beducation.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -33,6 +35,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class School {
 
     @Id
@@ -71,6 +74,15 @@ public class School {
     /** Teléfono de contacto. */
     private String phone;
 
+    /** Tipo de institución (Pública, Privada, Concertada). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "institution_type")
+    private InstitutionType institutionType;
+
+    /** Breve descripción o "Sobre nosotros" de la escuela. */
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     /**
      * Estado de la solicitud de registro.
      * PENDING: esperando aprobación del admin.
@@ -96,6 +108,7 @@ public class School {
      */
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnore
     private List<Student> students = new ArrayList<>();
 
     @CreationTimestamp
@@ -111,5 +124,12 @@ public class School {
      */
     public enum ApprovalStatus {
         PENDING, APPROVED, REJECTED
+    }
+
+    /**
+     * Tipos de instituciones educativas.
+     */
+    public enum InstitutionType {
+        PUBLIC, PRIVATE, CONCERTADA
     }
 }

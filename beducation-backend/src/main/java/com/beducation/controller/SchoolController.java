@@ -1,8 +1,11 @@
 package com.beducation.controller;
 
 import com.beducation.dto.SchoolRegistrationDto;
+import com.beducation.dto.SchoolProfileDto;
+import com.beducation.model.Application;
 import com.beducation.model.School;
 import com.beducation.model.Student;
+import com.beducation.model.User;
 import com.beducation.service.SchoolService;
 import com.beducation.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,5 +77,53 @@ public class SchoolController {
         @PathVariable Long schoolId,
         Pageable pageable) {
         return ResponseEntity.ok(schoolService.getSchoolStudents(schoolId, pageable));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
+    @Operation(summary = "Obtener perfil de la escuela logueada", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<SchoolProfileDto> getMyProfile() {
+        User user = securityUtils.getCurrentUser();
+        School school = schoolService.getSchoolByUserId(user.getId());
+        return ResponseEntity.ok(SchoolProfileDto.fromEntity(school));
+    }
+
+    @PutMapping("/{schoolId}")
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL') or hasAuthority('SCOPE_ADMIN')")
+    @Operation(summary = "Actualizar perfil de la escuela", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<School> updateProfile(
+        @PathVariable Long schoolId,
+        @RequestBody @Valid SchoolProfileDto dto) {
+        
+        // Verificación de seguridad básica: la escuela solo puede editarse a sí misma 
+        // (a menos que sea ADMIN, pero aquí simplificamos con la protección del servicio si fuera necesario)
+        User currentUser = securityUtils.getCurrentUser();
+        School currentSchool = schoolService.getSchoolByUserId(currentUser.getId());
+        
+        if (!currentUser.getRole().equals(User.Role.ADMIN) && !currentSchool.getId().equals(schoolId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        School updated = schoolService.updateSchoolProfile(schoolId, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/{schoolId}/pending-applications")
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
+    @Operation(summary = "Obtener aplicaciones pendientes de validación", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Page<Application>> getPendingApplications(
+        @PathVariable Long schoolId,
+        Pageable pageable) {
+        return ResponseEntity.ok(schoolService.getPendingApplications(schoolId, pageable));
+    }
+
+    @DeleteMapping("/{schoolId}/students/{studentId}")
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
+    @Operation(summary = "Eliminar un estudiante", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> deleteStudent(
+        @PathVariable Long schoolId,
+        @PathVariable Long studentId) {
+        schoolService.deleteStudent(schoolId, studentId);
+        return ResponseEntity.noContent().build();
     }
 }

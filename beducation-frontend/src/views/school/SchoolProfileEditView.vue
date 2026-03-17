@@ -24,7 +24,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Institución</label>
-              <select v-model="profile.type" class="input-field">
+              <select v-model="profile.institutionType" class="input-field">
                 <option value="PUBLIC">Pública</option>
                 <option value="PRIVATE">Privada</option>
                 <option value="CONCERTADA">Concertada</option>
@@ -85,61 +85,57 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-// import api from '../../services/api';
+import api from '../../services/api';
 
 const router = useRouter();
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 
 const profile = ref({
+  id: null,
   name: '',
-  type: 'PUBLIC',
+  institutionType: 'PUBLIC',
   description: '',
   contactEmail: '',
   phone: '',
   address: '',
-  website: ''
+  website: '',
+  contactPerson: ''
 });
 
 onMounted(async () => {
-  // Aquí cargaríamos los datos actuales del perfil de la escuela desde la API
-  // try {
-  //   const res = await api.get('/schools/me');
-  //   profile.value = res.data;
-  // } catch (e) {
-  //   console.error("Error al cargar perfil:", e);
-  // }
-  
-  // Datos mock iniciales
-  profile.value = {
-    name: 'IES Ejemplo',
-    type: 'PUBLIC',
-    description: 'Centro educativo enfocado en la innovación tecnológica y formación profesional dual.',
-    contactEmail: 'contacto@iesejemplo.es',
-    phone: '+34 91 234 56 78',
-    address: 'Calle Falsa 123, Madrid, 28000',
-    website: 'https://www.iesejemplo.es'
-  };
+  try {
+    const res = await api.get('/schools/me');
+    // res ya es la data directamente gracias al interceptor de axios en api.js
+    profile.value = { ...res };
+    console.log("Perfil cargado:", profile.value);
+  } catch (e) {
+    console.error("Error al cargar perfil:", e);
+    alert("No se pudo cargar la información del perfil.");
+  }
 });
 
 const saveProfile = async () => {
+  if (!profile.value.id && profile.value.id !== 0) {
+      // Si no tenemos ID, intentamos obtenerlo de nuevo o fallamos
+      alert("Error: No se encontró el ID de la escuela.");
+      return;
+  }
+
   isSaving.value = true;
   saveSuccess.value = false;
   
   try {
-    // Aquí enviaríamos los datos a la API
-    // await api.put('/schools/me', profile.value);
-    
-    // Simular tiempo de petición
-    await new Promise(r => setTimeout(r, 800));
+    await api.put(`/schools/${profile.value.id}`, profile.value);
     
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
       router.push('/school/dashboard');
-    }, 1500); // Redirigir después de 1.5s para que se vea el msj de éxito
+    }, 1500);
   } catch (error) {
-    alert("Hubo un error al guardar el perfil. " + error.message);
+    console.error("Error guardando perfil:", error);
+    alert("Hubo un error al guardar el perfil. " + (error.response?.data?.message || error.message));
   } finally {
     isSaving.value = false;
   }

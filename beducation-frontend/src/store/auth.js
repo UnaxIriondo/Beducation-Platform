@@ -65,7 +65,10 @@ export const useAuthStore = defineStore('auth', {
                 // Como no tenemos el alias "/me" en los endpoints, temporalmente 
                 // podríamos abstraerlo via auth0Id en un nuevo Controller `UserController` si fuera necesario.
                 // Simularemos una query o usar data almacenada del login success
-
+                if (endpoint) {
+                    const response = await api.get(endpoint);
+                    this.user = response.data;
+                }
             } catch (e) {
                 console.warn('Usuario registrado en Auth0 pero no se halló perfil completado en Backend (registro por terminar o invitado recién entrado).');
             }
@@ -81,6 +84,7 @@ export const useAuthStore = defineStore('auth', {
             sessionStorage.setItem('access_token', this.token);
 
             this.user = {
+                id: 1, // Añadimos ID por defecto para que las llamadas a la API funcionen
                 name: `Usuario MOCK (${role})`,
                 email: `test@${role.toLowerCase()}.com`
             };

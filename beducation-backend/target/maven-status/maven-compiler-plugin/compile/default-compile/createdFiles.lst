@@ -1,5 +1,6 @@
 com\beducation\util\MatchingEngine$MatchResult.class
 com\beducation\service\StudentService.class
+com\beducation\dto\SchoolProfileDto$SchoolProfileDtoBuilder.class
 com\beducation\model\User$UserStatus.class
 com\beducation\service\ApplicationService.class
 com\beducation\model\Interview$InterviewBuilder.class
@@ -24,6 +25,8 @@ com\beducation\repository\EducationTypeRepository.class
 com\beducation\model\Student.class
 com\beducation\dto\OpportunityDto.class
 com\beducation\repository\UserRepository.class
+com\beducation\exception\GlobalExceptionHandler.class
+com\beducation\dto\SchoolProfileDto.class
 com\beducation\controller\StudentController.class
 com\beducation\dto\SchoolRegistrationDto.class
 com\beducation\controller\CompanyController.class
@@ -33,12 +36,14 @@ com\beducation\controller\ApplicationController.class
 com\beducation\model\Opportunity$OpportunityBuilder.class
 com\beducation\model\School$ApprovalStatus.class
 com\beducation\model\School.class
+com\beducation\model\School$InstitutionType.class
 com\beducation\model\KeywordCategory$KeywordCategoryBuilder.class
 com\beducation\model\EducationType$EducationTypeBuilder.class
 com\beducation\service\EmailService.class
 com\beducation\service\ExpirationScheduler.class
 com\beducation\config\AudienceValidator.class
 com\beducation\config\SecurityConfig.class
+com\beducation\exception\GlobalExceptionHandler$ErrorResponse.class
 com\beducation\model\Opportunity$OpportunityStatus.class
 com\beducation\dto\StudentProfileDto.class
 com\beducation\repository\SchoolRepository.class

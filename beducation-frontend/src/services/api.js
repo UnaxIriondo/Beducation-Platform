@@ -14,9 +14,11 @@ const api = axios.create({
 
 // Interceptor para inyectar token Auth0 automáticamente en cada request protegida
 api.interceptors.request.use(async (config) => {
-    // Rutas exentas de JWT (Endpoints Públicos)
-    const isPublicRoute = config.url.includes('/schools') && config.method === 'post' ||
-        config.url.includes('/companies') && config.method === 'post';
+    // Rutas exentas de JWT (solo el registro inicial de escuela/empresa - endpoints públicos exactos)
+    const url = config.url;
+    const method = config.method;
+    const isPublicRoute = (url.match(/^\/schools\/?$/) && method === 'post') ||
+        (url.match(/^\/companies\/?$/) && method === 'post');
 
     if (!isPublicRoute) {
         try {
@@ -28,7 +30,10 @@ api.interceptors.request.use(async (config) => {
             // authStore manejará el token local cacheado con Pinia para más eficiencia.
             const token = sessionStorage.getItem('access_token');
             if (token) {
+                console.log(`API DEBUG: Enmascarando token en cabecera: Bearer ${token.substring(0, 10)}...`);
                 config.headers.Authorization = `Bearer ${token}`;
+            } else {
+                console.warn('API DEBUG: No se encontró token en sessionStorage');
             }
         } catch (error) {
             console.warn('Axios intercepción: Error obteniendo token', error);

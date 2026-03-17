@@ -79,6 +79,12 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     Page<Application> findPendingSchoolApprovals(Pageable pageable);
 
     /**
+     * Solicitudes en Etapa 4 (ADMIN_APPROVED) para una escuela específica.
+     */
+    @Query("SELECT a FROM Application a WHERE a.status = 'ADMIN_APPROVED' AND a.student.school.id = :schoolId")
+    Page<Application> findPendingSchoolApprovalsBySchoolId(@Param("schoolId") Long schoolId, Pageable pageable);
+
+    /**
      * Estadísticas: cuenta solicitudes por estado.
      * Usado en el informe del panel de administración.
      */
