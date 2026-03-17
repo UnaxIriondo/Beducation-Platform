@@ -47,9 +47,8 @@ import java.util.List;
 public class SecurityConfig {
 
     /** URL del emisor (issuer) de Auth0 — del application.yml */
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:https://dev-placeholder.auth0.com/}")
     private String issuerUri;
-
     /** Audiencia esperada en el JWT — identifica nuestra API */
     @Value("${app.auth0.audience}")
     private String audience;
@@ -113,26 +112,21 @@ public class SecurityConfig {
      *   4. Que el token no haya expirado (automático)
      *
      * @return JwtDecoder configurado con validadores de Auth0
-     */
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        // Decodificador base: descarga la clave pública de Auth0 automáticamente
-        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuerUri);
-
-        // Validador de audiencia: el token debe estar dirigido a nuestra API
-        OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
-
-        // Validador de emisor: el token debe venir de nuestro tenant Auth0
-        OAuth2TokenValidator<Jwt> issuerValidator =
-            JwtValidators.createDefaultWithIssuer(issuerUri);
-
-        // Combinar ambos validadores
-        OAuth2TokenValidator<Jwt> combinedValidator =
-            new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator);
-
-        jwtDecoder.setJwtValidator(combinedValidator);
-        return jwtDecoder;
+     */@Bean
+public JwtDecoder jwtDecoder() {
+    // Si es el placeholder de desarrollo, devuelve un decoder que no valida
+    if (issuerUri.contains("dev-placeholder")) {
+        return token -> {
+            throw new org.springframework.security.oauth2.jwt.BadJwtException("Auth0 no configurado - modo desarrollo");
+        };
     }
+    NimbusJwtDecoder jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuerUri);
+    OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
+    OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri);
+    OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator);
+    jwtDecoder.setJwtValidator(combinedValidator);
+    return jwtDecoder;
+}
 
     /**
      * Configuración de CORS (Cross-Origin Resource Sharing).
