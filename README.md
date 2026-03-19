@@ -1,17 +1,8 @@
-# 🎓 BeDucation Platform
+#  BeDucation Platform
 
 BeDucation is a comprehensive platform designed to streamline the management of international student placements. It serves as a bridge between schools, students, and companies, providing a unified dashboard for tracking applications, managing profiles, and coordinating the internship process.
 
-## 🚀 Project Overview
-
-The project is structured as a full-stack application with a clear separation between the frontend and backend.
-
-- **`beducation-backend`**: A robust RESTful API built with Spring Boot.
-- **`beducation-frontend`**: A modern, responsive dashboard built with Vue.js 3 and Tailwind CSS.
-
----
-
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Backend
 - **Core**: Java 17, Spring Boot 3.2
@@ -36,7 +27,7 @@ The project is structured as a full-stack application with a clear separation be
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 Beducation-Platform/
@@ -55,7 +46,7 @@ Beducation-Platform/
 
 ---
 
-## ⚙️ Getting Started
+##  Getting Started
 
 ### 1. Prerequisites
 - **Java**: JDK 17
@@ -95,7 +86,7 @@ Beducation-Platform/
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 - **Multi-role Support**: Dashboards tailored for Administrators, School Coordinators, and Students.
 - **Seamless Authentication**: Integrated with Auth0 for secure login and JWT-based API protection.
@@ -105,5 +96,5 @@ Beducation-Platform/
 
 ---
 
-## 📜 License
+##  License
 *Proprietary - BeDucation Platform*
