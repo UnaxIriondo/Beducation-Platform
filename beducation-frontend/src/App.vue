@@ -24,23 +24,10 @@
           <div v-if="isLoading" class="animate-pulse text-slate-400 font-medium">Cargando...</div>
           
           <template v-else-if="!authStore.isAuthenticated">
-            <!-- Botón login simulado MOCK en vez del Auth0 real -->
-          <div class="flex gap-2">
-        <!-- 
-            <button @click="mockLogin('STUDENT')" class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded">
-                Test Estudiante
-              </button>
-              <button @click="mockLogin('COMPANY')" class="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded">
-                Test Empresa
-              </button>
-              <button @click="mockLogin('ADMIN')" class="text-xs bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded">
-                Test Admin
-              </button>
-        -->
-                 <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded">
+            <div class="flex gap-2">
+              <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded">
                 Test Escuela
               </button>
-           
             </div>
           </template>
 
@@ -92,12 +79,10 @@ import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 // Auth0 es mantenido para la integracion final, pero vamos a usar AuthStore mockeado ahora
-const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
+const { isAuthenticated, user, isLoading, loginWithRedirect, logout, getAccessTokenSilently } = useAuth0();
 const authStore = useAuthStore();
 const router = useRouter();
 
-// Sincronizar el cliente de validación universal (CORS/Auth0)
-// Esto arranca la magia entre SPA y la API Spring Boot Security JWT.
 onMounted(() => {
   if (isAuthenticated.value) {
     authStore.initialize({
@@ -108,7 +93,6 @@ onMounted(() => {
   }
 });
 
-// Watcher reactivo al ciclo auth popup
 watch(isAuthenticated, (newState) => {
   if (newState) {
     authStore.initialize({
@@ -116,8 +100,14 @@ watch(isAuthenticated, (newState) => {
       user,
       getAccessTokenSilently
     });
+  } else {
+    authStore.clearSession();
   }
 });
+
+const login = () => {
+  loginWithRedirect();
+};
 
 const mockLogin = (role) => {
   authStore.mockLogin(role);

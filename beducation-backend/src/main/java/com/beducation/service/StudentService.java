@@ -5,6 +5,7 @@ import com.beducation.model.*;
 import com.beducation.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -115,6 +116,35 @@ public class StudentService {
 
         log.info("Documento de tipo {} subido para el estudiante M/ID: {}", type, student.getId());
         return savedDoc;
+    }
+
+    /**
+     * Lógica atómica de invitación (un solo estudiante).
+     * Se usa REQUIRES_NEW para que si falla un envío de email o un registro,
+     * no se rompa la transacción global de una importación masiva.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Student inviteStudent(School school, String firstName, String lastName, String email, String educationCode) {
+        if (studentRepository.existsByInvitationEmail(email)) {
+            log.info("El estudiante con email {} ya está invitado. Saltando.", email);
+            return null; 
+        }
+
+        Student.StudentBuilder studentBuilder = Student.builder()
+            .school(school)
+            .firstName(firstName)
+            .lastName(lastName)
+            .invitationEmail(email)
+            .invitedAt(LocalDateTime.now());
+
+        if (educationCode != null && !educationCode.isBlank()) {
+            educationTypeRepository.findByCode(educationCode)
+                .ifPresent(studentBuilder::educationType);
+        }
+
+        Student saved = studentRepository.save(studentBuilder.build());
+        log.info("Estudiante {} guardado correctamente (Transacción Independiente).", email);
+        return saved;
     }
 
     // ──────────────────────────────────────────────

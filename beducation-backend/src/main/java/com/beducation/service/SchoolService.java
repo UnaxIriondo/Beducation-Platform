@@ -9,7 +9,6 @@ import com.beducation.model.User;
 import com.beducation.repository.ApplicationRepository;
 import com.beducation.repository.SchoolRepository;
 import com.beducation.repository.StudentRepository;
-import com.beducation.repository.EducationTypeRepository;
 import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,9 +39,9 @@ public class SchoolService {
     private final SchoolRepository schoolRepository;
     private final StudentRepository studentRepository;
     private final ApplicationRepository applicationRepository;
-    private final EducationTypeRepository educationTypeRepository;
     private final UserService userService;
     private final EmailService emailService;
+    private final StudentService studentService;
 
     // ──────────────────────────────────────────────
     // REGISTRO Y APROBACIÓN DE ESCUELAS
@@ -147,25 +145,17 @@ public class SchoolService {
      */
     public Student inviteStudent(Long schoolId, String firstName, String lastName, String email) {
         School school = getValidatedApprovedSchool(schoolId);
-
-        if (studentRepository.existsByInvitationEmail(email) || userService.existsByEmail(email)) {
-            throw new IllegalStateException("El email " + email + " ya está invitado o registrado en la plataforma.");
+        
+        // Delegar en StudentService para manejar la transacción independiente si fuera necesario,
+        // aunque aquí la llamamos directamente.
+        Student student = studentService.inviteStudent(school, firstName, lastName, email, null);
+        
+        if (student != null) {
+            emailService.sendStudentInvitationEmail(email, school);
+            log.info("Estudiante invitado: {} por la escuela {}", email, school.getName());
         }
-
-        Student student = Student.builder()
-            .school(school)
-            .firstName(firstName)
-            .lastName(lastName)
-            .invitationEmail(email)
-            .invitedAt(LocalDateTime.now())
-            // Los estados de completitud arrancan en false (defecto)
-            .build();
-
-        Student saved = studentRepository.save(student);
-        emailService.sendStudentInvitationEmail(email, school);
-
-        log.info("Estudiante invitado: {} por la escuela {}", email, school.getName());
-        return saved;
+        
+        return student;
     }
 
     /**
@@ -177,85 +167,81 @@ public class SchoolService {
         School school = getValidatedApprovedSchool(schoolId);
         List<Student> importedStudents = new ArrayList<>();
 
-        // Detectar si el CSV usa coma o punto y coma leyendo la primera línea
-        char separator = ',';
         try {
+            // Leemos el contenido completo para detectar el separador y manejar codificación
             byte[] bytes = file.getBytes();
-            String content = new String(bytes);
-            String firstLine = content.split("\n")[0];
-            if (firstLine.contains(";") && !firstLine.contains(",")) {
+            // Intentar detectar si hay BOM y saltarlo, y usar UTF-8
+            String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+            if (content.startsWith("\uFEFF")) {
+                content = content.substring(1);
+            }
+
+            String[] lines = content.split("\\r?\\n");
+            if (lines.length == 0) return importedStudents;
+
+            String firstLine = lines[0];
+            
+            // Heurística de separador mejorada
+            char separator = ',';
+            long semiColons = firstLine.chars().filter(ch -> ch == ';').count();
+            long commas = firstLine.chars().filter(ch -> ch == ',').count();
+            if (semiColons > commas) {
                 separator = ';';
             }
-            log.info("Detectado separador de CSV: '{}'", separator);
-        } catch (Exception e) {
-            log.warn("No se pudo detectar el separador, usando coma por defecto");
-        }
+            log.info("Detectado separador de CSV: '{}' (Semicolons: {}, Commas: {})", separator, semiColons, commas);
 
-        com.opencsv.CSVParser parser = new com.opencsv.CSVParserBuilder()
-            .withSeparator(separator)
-            .build();
+            com.opencsv.CSVParser parser = new com.opencsv.CSVParserBuilder()
+                .withSeparator(separator)
+                .build();
 
-        try (CSVReader reader = new com.opencsv.CSVReaderBuilder(new InputStreamReader(file.getInputStream()))
-                .withCSVParser(parser)
-                .build()) {
-            
-            List<String[]> rows = reader.readAll();
-            
-            // Omitir cabecera
-            if (!rows.isEmpty()) rows.remove(0);
+            try (CSVReader reader = new com.opencsv.CSVReaderBuilder(new java.io.StringReader(content))
+                    .withCSVParser(parser)
+                    .build()) {
+                
+                List<String[]> rows = reader.readAll();
+                if (!rows.isEmpty()) rows.remove(0); // Quitar cabecera
 
-            if (rows.size() > 100) {
-                throw new IllegalStateException("El archivo CSV contiene más de 100 registros. Límite excedido.");
-            }
+                if (rows.size() > 100) {
+                    throw new IllegalStateException("El archivo CSV contiene más de 100 registros. Límite: 100.");
+                }
 
-            int rowIdx = 1;
-            for (String[] row : rows) {
-                rowIdx++;
-                try {
-                    if (row.length >= 3) {
-                        String firstName = row[0].trim();
-                        String lastName = row[1].trim();
-                        String email = row[2].trim();
-
-                        if (email.isEmpty()) continue;
-
-                        if (!studentRepository.existsByInvitationEmail(email)) {
-                            Student.StudentBuilder studentBuilder = Student.builder()
-                                .school(school)
-                                .firstName(firstName)
-                                .lastName(lastName)
-                                .invitationEmail(email)
-                                .invitedAt(LocalDateTime.now());
-                            
-                            // Columna opcional de EducationType
-                            if (row.length >= 4) {
-                                String eduCode = row[3].trim();
-                                if (!eduCode.isEmpty()) {
-                                    educationTypeRepository.findByCode(eduCode)
-                                        .ifPresent(studentBuilder::educationType);
-                                }
-                            }
-
-                            Student student = studentBuilder.build();
-                            studentRepository.save(student);
-                            importedStudents.add(student);
-                            emailService.sendStudentInvitationEmail(email, school);
-                        } else {
-                            log.info("Fila {}: El estudiante con email {} ya existe. Saltando.", rowIdx, email);
-                        }
-                    } else {
-                        log.warn("Fila {}: Formato incorrecto. Se esperan al menos 3 columnas.", rowIdx);
+                int rowIdx = 1;
+                for (String[] row : rows) {
+                    rowIdx++;
+                    if (row.length < 3) {
+                        log.warn("Fila {}: Formato insuficiente (columnas: {}). Saltando.", rowIdx, row.length);
+                        continue;
                     }
-                } catch (Exception e) {
-                    log.error("Error procesando fila {}: {}", rowIdx, e.getMessage());
+
+                    String firstName = row[0].trim();
+                    String lastName = row[1].trim();
+                    String email = row[2].trim().toLowerCase(); // Normalizar email
+                    String eduCode = row.length >= 4 ? row[3].trim() : null;
+
+                    if (email.isEmpty()) continue;
+
+                    try {
+                        // Llamamos a StudentService.inviteStudent que tiene REQUIRES_NEW
+                        // Esto asegura que cada invitación sea atómica.
+                        Student student = studentService.inviteStudent(school, firstName, lastName, email, eduCode);
+                        
+                        if (student != null) {
+                            importedStudents.add(student);
+                            // Intentar enviar email (captura su propia excepción)
+                            emailService.sendStudentInvitationEmail(email, school);
+                        }
+                    } catch (Exception e) {
+                        log.error("Fallo al procesar estudiante en fila {}: {}", rowIdx, e.getMessage());
+                    }
                 }
             }
-            log.info("Importación CSV finalizada. {} estudiantes invitados a {}", importedStudents.size(), school.getName());
-            return importedStudents;
             
+            log.info("Importación finalizada. {} de {} estudiantes procesados.", importedStudents.size(), lines.length - 1);
+            return importedStudents;
+
         } catch (Exception e) {
-            log.error("Fallo crítico durante el procesado CSV", e);
-            throw new RuntimeException("Error grave procesando el archivo CSV: " + e.getMessage());
+            log.error("Error crítico procesando CSV", e);
+            throw new RuntimeException("Error procesando el archivo CSV: " + e.getMessage());
         }
     }
 

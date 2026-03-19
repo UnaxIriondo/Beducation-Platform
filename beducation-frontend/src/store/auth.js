@@ -83,15 +83,22 @@ export const useAuthStore = defineStore('auth', {
             this.token = "mock-jwt-token";
             sessionStorage.setItem('access_token', this.token);
 
-            this.user = {
-                id: 1, // Añadimos ID por defecto para que las llamadas a la API funcionen
+            this.auth0User = {
+                sub: `mock-auth0-id-${role.toLowerCase()}`,
                 name: `Usuario MOCK (${role})`,
                 email: `test@${role.toLowerCase()}.com`
             };
 
-            // Simular que terminó de cargar
+            this.user = {
+                id: 1,
+                name: this.auth0User.name,
+                email: this.auth0User.email
+            };
+
             this.loading = false;
         },
+
+        // ──────────────────────────────────────────────
 
         clearSession() {
             this.user = null;
