@@ -51,6 +51,15 @@ public class OpportunitySearchController {
         return ResponseEntity.ok(results);
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Obtener detalles de una oferta específica.", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Opportunity> getById(@PathVariable Long id) {
+        return opportunityRepository.findById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
     // ── MATCHING ALGORITHM (SUGERERENCIAS DE ALTA INTELIGENCIA) ── //
 
     @GetMapping("/matching/student/{studentId}")

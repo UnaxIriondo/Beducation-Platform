@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ============================================================
@@ -94,6 +95,18 @@ public class StudentService {
         Student student = studentRepository.findById(studentId)
             .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
 
+        // 1. Buscar si ya existe un documento de este tipo para borrarlo (Limpieza)
+        studentDocumentRepository.findByStudentId(studentId).stream()
+            .filter(doc -> doc.getDocumentType() == type)
+            .forEach(oldDoc -> {
+                log.info("Eliminando documento antiguo de tipo {} para estudiante {}: {}", type, studentId, oldDoc.getS3Key());
+                s3StorageService.deleteFile(oldDoc.getS3Key());
+                studentDocumentRepository.delete(oldDoc);
+                // Lo quitamos de la lista local para que Hibernate no intente re-guardarlo
+                student.getDocuments().remove(oldDoc);
+            });
+
+        // 2. Subir el nuevo
         String folder = "students/" + student.getId() + "/docs";
         String s3Key = s3StorageService.uploadFile(file, folder);
 
@@ -145,6 +158,37 @@ public class StudentService {
         Student saved = studentRepository.save(studentBuilder.build());
         log.info("Estudiante {} guardado correctamente (Transacción Independiente).", email);
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public Student getStudentByUserId(Long userId) {
+        return studentRepository.findByUserId(userId)
+            .orElseThrow(() -> new RuntimeException("No se encontró perfil de estudiante para el usuario ID: " + userId));
+    }
+
+    /**
+     * Sincroniza un usuario recién autenticado con un registro de estudiante
+     * invitado previamente por email.
+     */
+    public Student syncStudentWithUser(User user) {
+        // 1. Verificar si ya está vinculado
+        Optional<Student> existingLinked = studentRepository.findByUserId(user.getId());
+        if (existingLinked.isPresent()) return existingLinked.get();
+
+        // 2. Buscar por email de invitación (Trim para seguridad con import CSV)
+        String userEmail = user.getEmail() != null ? user.getEmail().trim() : "";
+        
+        return studentRepository.findByInvitationEmail(userEmail)
+            .map(student -> {
+                if (student.getUser() == null) {
+                    student.setUser(user);
+                    student.setRegisteredAt(LocalDateTime.now());
+                    log.info("Sincronizado alumno {} con User ID {}", student.getInvitationEmail(), user.getId());
+                    return studentRepository.save(student);
+                }
+                return student;
+            })
+            .orElse(null);
     }
 
     // ──────────────────────────────────────────────

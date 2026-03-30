@@ -91,17 +91,16 @@ public class SecurityConfig {
                     "/swagger-ui.html"
                 ).permitAll()
 
-                // Registro de escuelas y empresas (antes de autenticarse)
+                // Registro de escuelas y empresas (antes de autenticarse) y Debug Login
                 .requestMatchers(HttpMethod.POST, "/schools", "/companies").permitAll()
+                .requestMatchers("/debug/**").permitAll()
 
                 // Todos los demás endpoints requieren JWT válido
                 .anyRequest().authenticated()
             )
 
-            // ── Configurar como Resource Server OAuth2 (valida JWT)
-            .oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()))
-            );
+            // ── Configurar como Resource Server OAuth2 (valida JWT automáticamente buscando el Bean JwtDecoder)
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
 
         return http.build();
     }
@@ -122,18 +121,32 @@ public JwtDecoder jwtDecoder() {
     if (issuerUri.contains("dev-placeholder")) {
         return token -> {
             System.out.println("DEBUG: Recibido token para validar: " + token);
-            if ("mock-jwt-token".equals(token)) {
-                System.out.println("DEBUG: Validando token como MOCK-JWT-TOKEN");
-                // Generar un JWT Mock con todos los permisos (scopes) para facilitar desarrollo
+            if (token.startsWith("mock-jwt-token")) {
+                System.out.println("DEBUG: Validando token modo prueba: " + token);
+                
+                String auth0Id = "mock-user-123";
+                String role = "SCHOOL COMPANY STUDENT ADMIN"; // Default broad scopes
+                
+                if (token.contains("~")) {
+                    String[] parts = token.split("~");
+                    if (parts.length >= 2) auth0Id = parts[1];
+                    if (parts.length >= 3) role = parts[2];
+                }
+
                 Map<String, Object> headers = new HashMap<>();
                 headers.put("alg", "none");
                 
                 Map<String, Object> claims = new HashMap<>();
-                claims.put("sub", "mock-user-123");
+                claims.put("sub", auth0Id);
                 claims.put("iss", issuerUri);
                 claims.put("aud", Collections.singletonList(audience));
-                // Inyectamos todos los scopes posibles para que @PreAuthorize no falle en ningún dashboard
-                claims.put("scope", "SCHOOL COMPANY STUDENT ADMIN");
+                // Importante: No ponemos el prefijo SCOPE_ aquí porque el converter por defecto ya lo añade 
+                // a partir del claim "scope" o "scp".
+                claims.put("scope", role);
+                claims.put("scp", Collections.singletonList(role));
+                claims.put("authorities", Collections.singletonList("SCOPE_" + role));
+                // Auth0 Custom Claims for profile data matching Vue store expectations
+                claims.put("https://beducation.com/role", role);
                 
                 return new Jwt(token, Instant.now(), Instant.now().plusSeconds(3600), headers, claims);
             }

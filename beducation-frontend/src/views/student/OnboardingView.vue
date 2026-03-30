@@ -63,15 +63,49 @@
                     </select>
                  </div>
                  
-                 <div>
-                    <label class="block mb-2 text-sm font-medium text-slate-700">Destinos Deseados (Países)</label>
-                    <input type="text" class="input-field text-sm" placeholder="Añade separando por comas (ej, Germany, Italy, Ireland)..." />
-                    <p class="text-xs text-slate-500 mt-1">Usado para el 20% del algoritmo MatchMaker de compatibilidad.</p>
+                  <div>
+                    <label class="block mb-2 text-sm font-medium text-slate-700">Competencias y Tecnologías (Keywords)</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
+                        <label v-for="kw in allKeywords" :key="kw.id" class="flex items-center gap-2 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
+                            <input type="checkbox" :value="kw.id" v-model="form.keywordIds" class="rounded text-sky-600 focus:ring-sky-500" />
+                            <span class="text-xs text-slate-600 font-medium">{{ kw.name }}</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Selecciona las tecnologías o habilidades que dominas. Esto es clave para el MatchMaker (70% del peso).</p>
                  </div>
 
                  <div>
-                    <label class="block mb-2 text-sm font-medium text-slate-700">Motivación personal e Idiomas (Carta presentación corta)</label>
-                    <textarea v-model="form.motivation" rows="4" class="input-field resize-none" placeholder="Escribe al menos 100 caracteres sobre por qué quieres hacer prácticas internacionales..."></textarea>
+                    <label class="block mb-2 text-sm font-medium text-slate-700">Destinos Deseados (Países)</label>
+                    <div class="flex flex-wrap gap-2 mb-3 max-h-32 overflow-y-auto p-2 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                        <div v-for="code in form.countryPreferences" :key="code" 
+                             class="bg-white text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-2 shadow-sm hover:border-emerald-400 transition-all">
+                            <span class="opacity-60">{{ code }}</span>
+                            {{ getCountryName(code) }}
+                            <button @click.prevent="removeCountry(code)" class="text-slate-400 hover:text-rose-500 transition-colors p-0.5">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div v-if="form.countryPreferences.length === 0" class="text-xs text-slate-400 italic py-1 px-1">No has seleccionado ningún destino aún...</div>
+                    </div>
+                    
+                    <select @change="addCountry" class="input-field text-sm font-medium focus:ring-emerald-500/20">
+                        <option value="">+ Añadir país de destino (31 disponibles)...</option>
+                        <option v-for="country in AVAILABLE_COUNTRIES" :key="country.code" :value="country.code" :disabled="form.countryPreferences.includes(country.code)">
+                            {{ country.name }}
+                        </option>
+                    </select>
+                    <p class="text-xs text-slate-500 mt-2">Puedes elegir múltiples destinos. Esto ayudará a priorizar las ofertas más adecuadas para ti.</p>
+                 </div>
+
+                 <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-slate-700">Motivación personal e Idiomas</label>
+                        <span class="text-xs font-bold" :class="form.motivation.length >= 100 ? 'text-emerald-500' : 'text-rose-400'">
+                            {{ form.motivation.length }} / 100 mín.
+                        </span>
+                    </div>
+                    <textarea v-model="form.motivation" rows="4" class="input-field resize-none" :class="{'border-rose-300': form.motivation.length > 0 && form.motivation.length < 100}" placeholder="Escribe al menos 100 caracteres sobre por qué quieres hacer prácticas internacionales..."></textarea>
+                    <p v-if="form.motivation.length > 0 && form.motivation.length < 100" class="text-[10px] text-rose-500 mt-1 font-bold italic animate-pulse">¡Falta un poco más para que tu perfil sea válido!</p>
                  </div>
 
                  <div class="flex justify-between pt-4">
@@ -115,20 +149,54 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const currentStep = ref(1);
+
+const AVAILABLE_COUNTRIES = [
+    { code: 'AT', name: 'Austria' }, { code: 'BE', name: 'Bélgica' }, { code: 'BG', name: 'Bulgaria' },
+    { code: 'CY', name: 'Chipre' }, { code: 'HR', name: 'Croacia' }, { code: 'DK', name: 'Dinamarca' },
+    { code: 'SK', name: 'Eslovaquia' }, { code: 'SI', name: 'Eslovenia' }, { code: 'ES', name: 'España' },
+    { code: 'EE', name: 'Estonia' }, { code: 'FI', name: 'Finlandia' }, { code: 'FR', name: 'Francia' },
+    { code: 'GR', name: 'Grecia' }, { code: 'HU', name: 'Hungría' }, { code: 'IE', name: 'Irlanda' },
+    { code: 'IT', name: 'Italia' }, { code: 'LV', name: 'Letonia' }, { code: 'LT', name: 'Lituania' },
+    { code: 'LU', name: 'Luxemburgo' }, { code: 'MT', name: 'Malta' }, { code: 'NL', name: 'Países Bajos' },
+    { code: 'PL', name: 'Polonia' }, { code: 'PT', name: 'Portugal' }, { code: 'CZ', name: 'República Checa' },
+    { code: 'RO', name: 'Rumanía' }, { code: 'SE', name: 'Suecia' }, { code: 'DE', name: 'Alemania' },
+    { code: 'GB', name: 'Reino Unido' }, { code: 'CH', name: 'Suiza' }, { code: 'NO', name: 'Noruega' },
+    { code: 'IS', name: 'Islandia' }
+];
+
+const addCountry = (event) => {
+    const code = event.target.value;
+    if (code && !form.value.countryPreferences.includes(code)) {
+        form.value.countryPreferences.push(code);
+    }
+    event.target.value = "";
+};
+
+const removeCountry = (code) => {
+    form.value.countryPreferences = form.value.countryPreferences.filter(c => c !== code);
+};
+
+const getCountryName = (code) => {
+    return AVAILABLE_COUNTRIES.find(c => c.code === code)?.name || code;
+};
 
 const form = ref({
     firstName: '',
     lastName: '',
     phone: '',
-    email: 'alumno@ejemplo.es', // placeholder real sacado de auth local
+    email: '',
     educationTypeId: null,
-    motivation: ''
+    motivation: '',
+    countryPreferences: [],
+    keywordIds: []
 });
 
 const cvFile = ref(null);
@@ -137,6 +205,44 @@ const fileInput = ref(null);
 const loading = ref(false);
 const error = ref('');
 const success = ref(false);
+const allKeywords = ref([]);
+
+const studentId = ref(null);
+
+onMounted(async () => {
+    if (!authStore.user) {
+        await authStore.fetchLocalUserProfile();
+    }
+    fetchKeywords();
+});
+
+const fetchKeywords = async () => {
+    try {
+        const res = await api.get('/keywords');
+        allKeywords.value = res;
+    } catch (e) {
+        console.error("Error fetching keywords:", e);
+    }
+}
+
+// Reactividad: Si authStore.user cambia (cuando termina de cargar), actualizamos el formulario
+watch(() => authStore.user, (newUser) => {
+    console.log('Watcher triggered in onboarding. Full object:', newUser);
+    if (newUser) {
+        // Intentamos capturar el ID de varias formas por seguridad
+        studentId.value = newUser.id || newUser.studentId;
+        console.log('Assigned studentId:', studentId.value, 'Types:', typeof studentId.value, 'Keys:', Object.keys(newUser));
+        
+        form.value.firstName = newUser.firstName || '';
+        form.value.lastName = newUser.lastName || '';
+        form.value.email = newUser.invitationEmail || authStore.auth0User?.email || '';
+        form.value.phone = newUser.phone || '';
+        form.value.educationTypeId = newUser.educationType?.id || null;
+        form.value.motivation = newUser.motivation || '';
+        form.value.countryPreferences = newUser.countryPreferences || [];
+        form.value.keywordIds = newUser.keywords?.map(k => k.id) || [];
+    }
+}, { immediate: true });
 
 const handleCvUpload = (event) => {
     const file = event.target.files[0];
@@ -150,9 +256,36 @@ const handleCvUpload = (event) => {
 };
 
 const saveProfile = async () => {
-    // Si no ha subido currículum paramos.
-    if (!cvFile.value) {
-        error.value = "Debes subir tu Currículum Vitae oficial para terminar.";
+    // Usar el ID del store como fuente de verdad definitiva si el local falló
+    const effectiveId = studentId.value || authStore.user?.id;
+    
+    console.log('Attempting to save profile. studentId:', effectiveId, 'From store:', authStore.user?.id);
+    
+    if (!effectiveId) {
+        console.error('Save aborted: No ID found. Store user:', authStore.user);
+        error.value = "No se ha podido identificar al estudiante. Prueba a recargar la página.";
+        return;
+    }
+
+    // Validar motivación
+    if (form.value.motivation.length < 100) {
+        error.value = "Tu motivación debe tener al menos 100 caracteres.";
+        currentStep.value = 2;
+        return;
+    }
+
+    // Validar keywords
+    if (form.value.keywordIds.length === 0) {
+        error.value = "Debes seleccionar al menos una competencia tecnológica.";
+        currentStep.value = 2;
+        return;
+    }
+
+    // Si no ha subido currículum paramos, a menos que ya tenga uno (checking documents list)
+    const hasExistingCv = authStore.user?.documents?.some(doc => doc.documentType === 'CV');
+    if (!cvFile.value && !hasExistingCv && !authStore.user?.profileComplete) {
+        error.value = "Debes subir tu Currículum Vitae oficial para terminar (al menos una vez).";
+        currentStep.value = 3;
         return;
     }
 
@@ -160,21 +293,40 @@ const saveProfile = async () => {
     error.value = '';
     
     try {
-        // En una app real haríamos:
-        // 1. PUT a /students/{id}/profile con el this.form
-        // 2. Si hay cvFile, haríamos POST a multipart /students/{id}/documents
-        
-        // Simulación:
-        await new Promise(r => setTimeout(r, 1500));
+        // 2. Actualizar perfil
+        await api.put(`/students/${effectiveId}/profile`, {
+            firstName: form.value.firstName,
+            lastName: form.value.lastName,
+            phone: form.value.phone,
+            educationTypeId: form.value.educationTypeId,
+            motivation: form.value.motivation,
+            keywordIds: form.value.keywordIds,
+            countryPreferences: form.value.countryPreferences
+        });
+
+        // 3. Subir CV si se ha seleccionado uno nuevo
+        if (cvFile.value) {
+            const formData = new FormData();
+            formData.append('file', cvFile.value);
+            formData.append('type', 'CV');
+            await api.post(`/students/${studentId.value}/documents`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                params: { type: 'CV' }
+            });
+        }
         
         success.value = true;
         
+        // Refrescar perfil en el store para que sepa que está completo
+        await authStore.fetchLocalUserProfile();
+
         setTimeout(() => {
              router.push('/student/dashboard');
         }, 1500);
 
     } catch(e) {
-        error.value = "Ups, ha ocurrido un error conectando al sistema de guardado.";
+        console.error("Error saving profile:", e);
+        error.value = e.message || "Ups, ha ocurrido un error conectando al sistema de guardado.";
     } finally {
         loading.value = false;
     }

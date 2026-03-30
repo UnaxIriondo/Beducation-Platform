@@ -6,6 +6,7 @@ com\beducation\service\ApplicationService.class
 com\beducation\model\Interview$InterviewBuilder.class
 com\beducation\repository\KeywordRepository.class
 com\beducation\model\Keyword$KeywordBuilder.class
+com\beducation\controller\DebugController.class
 com\beducation\service\AdminService.class
 com\beducation\controller\SchoolController.class
 com\beducation\model\Opportunity.class
@@ -27,6 +28,7 @@ com\beducation\dto\OpportunityDto.class
 com\beducation\repository\UserRepository.class
 com\beducation\exception\GlobalExceptionHandler.class
 com\beducation\dto\SchoolProfileDto.class
+com\beducation\controller\KeywordController.class
 com\beducation\controller\StudentController.class
 com\beducation\dto\SchoolRegistrationDto.class
 com\beducation\controller\CompanyController.class

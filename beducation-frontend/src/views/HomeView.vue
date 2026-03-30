@@ -1,6 +1,5 @@
 <template>
   <div class="h-full flex flex-col items-center justify-center text-center space-y-6 animate-fade-in py-16">
-    <!--
     <div class="max-w-3xl mx-auto space-y-8 glass-card p-12 rounded-3xl relative overflow-hidden">
       <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50"></div>
       
@@ -25,8 +24,19 @@
           Soy Empresa Receptora
         </button>
       </div>
+
+      <!-- Debug Login by Email -->
+      <div v-if="!authStore.isAuthenticated" class="mt-8 pt-8 border-t border-slate-100 max-w-sm mx-auto">
+        <p class="text-xs text-slate-400 uppercase font-bold tracking-widest mb-4">Acceso Rápido Desarrollador</p>
+        <div class="flex gap-2">
+           <input v-model="debugEmail" type="email" placeholder="email@ejemplo.com" class="text-sm px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg flex-grow focus:ring-2 focus:ring-primary-500 outline-none" />
+           <button @click="debugLogin" :disabled="!debugEmail || loadingDebug" class="bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold hover:bg-slate-900 transition-colors disabled:opacity-50">
+             {{ loadingDebug ? '...' : 'Entrar' }}
+           </button>
+        </div>
+        <p v-if="debugError" class="text-[10px] text-rose-500 mt-2">{{ debugError }}</p>
+      </div>
     </div>
-    -->
     
     <!-- Sección Features Rápida -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-20 px-4">
@@ -64,14 +74,52 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue';
 import { useAuthStore } from '../store/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuth0 } from '@auth0/auth0-vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+const { loginWithRedirect } = useAuth0();
 
-const mockLogin = (role) => {
-  authStore.mockLogin(role);
+const debugEmail = ref('');
+const loadingDebug = ref(false);
+const debugError = ref('');
+
+onMounted(() => {
+  // Manejar redirecciones de invitación: /register?email=...
+  if (route.path === '/register' || route.query.email) {
+    const email = route.query.email;
+    if (!authStore.isAuthenticated) {
+      console.log("Detectada invitación para:", email);
+      loginWithRedirect({
+        authorizationParams: {
+          screen_hint: 'signup',
+          login_hint: email
+        }
+      });
+    }
+  }
+});
+
+const debugLogin = async () => {
+  if (!debugEmail.value) return;
+  loadingDebug.value = true;
+  debugError.value = '';
+  try {
+    await authStore.loginByEmail(debugEmail.value);
+    goToDashboard();
+  } catch (e) {
+    debugError.value = "No se encontró usuario con ese email o error de servidor.";
+  } finally {
+    loadingDebug.value = false;
+  }
+};
+
+const mockLogin = async (role) => {
+  await authStore.mockLogin(role);
   goToDashboard();
 };
 

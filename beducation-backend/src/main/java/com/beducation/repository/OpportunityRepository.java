@@ -38,15 +38,14 @@ public interface OpportunityRepository extends JpaRepository<Opportunity, Long> 
      * @param keyword     búsqueda en título o descripción
      * @param pageable    paginación
      */
-    @Query("SELECT DISTINCT o FROM Opportunity o " +
-           "LEFT JOIN o.keywords k " +
+    @Query("SELECT o FROM Opportunity o " +
            "WHERE o.status = 'APPROVED' " +
            "AND o.spotsAvailable > 0 " +
-           "AND (:country IS NULL OR LOWER(o.country) = LOWER(:country)) " +
-           "AND (:educTypeId IS NULL OR o.educationType.id = :educTypeId) " +
-           "AND (:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(k.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+           "AND (:country IS NULL OR o.country = :country) " +
+           "AND (:educTypeId IS NULL OR (o.educationType IS NOT NULL AND o.educationType.id = :educTypeId)) " +
+           "AND (:keyword IS NULL OR (o.title LIKE CONCAT('%', :keyword, '%') OR " +
+           "     o.description LIKE CONCAT('%', :keyword, '%') OR " +
+           "     EXISTS (SELECT 1 FROM o.keywords k WHERE k.name LIKE CONCAT('%', :keyword, '%'))))")
     Page<Opportunity> searchApprovedOpportunities(
         @Param("country") String country,
         @Param("educTypeId") Long educTypeId,

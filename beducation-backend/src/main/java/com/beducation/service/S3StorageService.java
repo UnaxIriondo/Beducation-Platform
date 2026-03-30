@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -30,6 +30,9 @@ public class S3StorageService {
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
+
+    @Value("${aws.access-key}")
+    private String accessKey;
 
     /**
      * Sube un archivo a S3 y devuelve la clave (key) generada.
@@ -55,7 +58,13 @@ public class S3StorageService {
                 .contentType(file.getContentType())
                 .build();
 
-            // Ejecutar la subida
+            // Modo Simulación para Desarrollo: Si las credenciales son placeholders, no intentamos subir a AWS S3 real
+            if ("your-access-key".equals(accessKey)) {
+                log.warn("AWS S3 en modo simulación (credenciales no configuradas). Saltando subida real del archivo: {}", originalFilename);
+                return s3Key;
+            }
+
+            // Ejecutar la subida real
             s3Client.putObject(putObjectRequest, 
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
@@ -72,17 +81,26 @@ public class S3StorageService {
     }
 
     /**
-     * Obtiene la URL pública de lectura de un objeto en S3.
+     * Elimina un archivo de S3.
      */
-    public String getFileUrl(String s3Key) {
-        if (s3Key == null || s3Key.isBlank()) return null;
+    public void deleteFile(String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) return;
+        
         try {
-            return s3Client.utilities()
-                .getUrl(GetUrlRequest.builder().bucket(bucketName).key(s3Key).build())
-                .toString();
+            if ("your-access-key".equals(accessKey)) {
+                log.warn("AWS S3 en modo simulación. Saltando eliminación real: {}", s3Key);
+                return;
+            }
+
+            s3Client.deleteObject(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .build());
+            
+            log.info("Archivo eliminado de S3: {}", s3Key);
         } catch (Exception e) {
-            log.warn("No se pudo generar la URL para el recurso S3: {}", s3Key);
-            return null;
+            log.error("Error al eliminar archivo de S3: {}", e.getMessage());
+            // No lanzamos excepción para no romper el flujo si la eliminación falla (cleanup opcional)
         }
     }
 }

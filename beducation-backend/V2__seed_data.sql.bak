@@ -1,0 +1,24 @@
+-- 1. Una Escuela de Prueba (necesita un usuario asociado)
+INSERT INTO users (auth0_id, email, role, status)
+SELECT 'debug-mock-id-escuela-prueba', 'director@ikasle.egibide.org', 'SCHOOL', 'ACTIVE'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'director@ikasle.egibide.org');
+
+-- 2. Insertar escuela si no existe (buscando el user_id al vuelo)
+INSERT INTO schools (user_id, name, country, city, address, website, contact_person, status)
+SELECT id, 'Egibide Arriaga', 'España', 'Vitoria-Gasteiz', 'Calle Arriaga s/n', 'https://egibide.org', 'Unax Iriondo', 'APPROVED'
+FROM users 
+WHERE email = 'director@ikasle.egibide.org'
+  AND NOT EXISTS (SELECT 1 FROM schools WHERE user_id = users.id);
+
+-- 3. Estudiantes Invitados
+INSERT INTO students (school_id, first_name, last_name, invitation_email, education_type_id)
+SELECT id, 'Mock', 'Student', 'mock-student@beducation.com', 3
+FROM schools 
+WHERE user_id = (SELECT id FROM users WHERE email = 'director@ikasle.egibide.org')
+  AND NOT EXISTS (SELECT 1 FROM students WHERE invitation_email = 'mock-student@beducation.com');
+
+INSERT INTO students (school_id, first_name, last_name, invitation_email, education_type_id)
+SELECT id, 'Unax', 'Iriondo', 'unax.iriondo.51345@ikasle.egibide.org', 3
+FROM schools 
+WHERE user_id = (SELECT id FROM users WHERE email = 'director@ikasle.egibide.org')
+  AND NOT EXISTS (SELECT 1 FROM students WHERE invitation_email = 'unax.iriondo.51345@ikasle.egibide.org');

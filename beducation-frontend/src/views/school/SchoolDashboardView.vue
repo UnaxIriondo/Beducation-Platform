@@ -57,6 +57,7 @@
                     <tr>
                         <th class="px-6 py-4 font-bold border-b border-slate-200">Nombre / Email</th>
                         <th class="px-6 py-4 font-bold border-b border-slate-200">Tipo Edu.</th>
+                        <th class="px-6 py-4 font-bold border-b border-slate-200 text-center">Registro</th>
                         <th class="px-6 py-4 font-bold border-b border-slate-200 text-center">Perfil Completo</th>
                         <th class="px-6 py-4 font-bold text-right border-b border-slate-200">Acciones</th>
                     </tr>
@@ -69,6 +70,10 @@
                          </td>
                          <td class="px-6 py-4">
                              {{ std.educationType?.code || 'Pte. Onboarding' }}
+                         </td>
+                         <td class="px-6 py-4 text-center">
+                              <span v-if="std.registeredAt" class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded text-xs font-medium border border-emerald-100">Registrado</span>
+                              <span v-else class="text-amber-600 bg-amber-50 px-2 py-1 rounded text-xs font-medium border border-amber-100">Invitado (Pte)</span>
                          </td>
                          <td class="px-6 py-4 text-center">
                               <span v-if="std.profileComplete" class="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-1 rounded text-xs font-bold border border-emerald-200">

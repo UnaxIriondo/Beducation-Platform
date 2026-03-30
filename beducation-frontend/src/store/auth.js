@@ -9,12 +9,12 @@ import api from '../services/api';
 // tanto Auth0 Web (Token) como con el Backend (Información Completa)
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null, // User entity loaded from Backend (Profile, Company Data)
-        auth0User: null, // JWT Payload base (email, sub)
-        token: null,
-        isAuthenticated: false,
-        role: null, // SCHOOL | STUDENT | COMPANY | ADMIN
-        loading: true
+        user: null,
+        auth0User: null,
+        token: sessionStorage.getItem('access_token') || null,
+        isAuthenticated: !!sessionStorage.getItem('access_token'),
+        role: sessionStorage.getItem('user_role') || null,
+        loading: false
     }),
 
     actions: {
@@ -50,7 +50,13 @@ export const useAuthStore = defineStore('auth', {
         },
 
         async fetchLocalUserProfile() {
-            if (!this.isAuthenticated || this.role === 'UNKNOWN') return;
+            if (!this.isAuthenticated) return;
+            
+            console.log('Fetching profile for role:', this.role);
+            if (!this.role || this.role === 'UNKNOWN') {
+                console.warn('Role is missing, cannot fetch profile yet.');
+                return;
+            }
 
             try {
                 let endpoint = "";
@@ -67,35 +73,72 @@ export const useAuthStore = defineStore('auth', {
                 // Simularemos una query o usar data almacenada del login success
                 if (endpoint) {
                     const response = await api.get(endpoint);
-                    this.user = response.data;
+                    // El interceptor de axios ya devuelve response.data directamente
+                    this.user = response;
                 }
             } catch (e) {
                 console.warn('Usuario registrado en Auth0 pero no se halló perfil completado en Backend (registro por terminar o invitado recién entrado).');
             }
         },
 
+        async loginByEmail(email) {
+            this.loading = true;
+            try {
+                // El endpoint /api/debug/login devuelve {token, role, email}
+                const response = await api.get(`/debug/login`, { params: { email } });
+                
+                this.token = response.token;
+                this.role = response.role;
+                sessionStorage.setItem('access_token', this.token);
+                sessionStorage.setItem('user_role', this.role);
+                console.log('Login success. Token and Role saved:', this.role);
+                this.isAuthenticated = true;
+                
+                this.auth0User = {
+                    sub: response.token.split('~')[1],
+                    email: response.email,
+                    name: response.email.split('@')[0]
+                };
+
+                await this.fetchLocalUserProfile();
+                return true;
+            } catch (err) {
+                console.error('Debug login failed:', err);
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         // ──────────────────────────────────────────────
         // MOCK LOGIN PARA PRUEBAS (Evita el paso real de Auth0)
         // ──────────────────────────────────────────────
-        mockLogin(role) {
-            this.isAuthenticated = true;
-            this.role = role;
-            this.token = "mock-jwt-token";
-            sessionStorage.setItem('access_token', this.token);
-
-            this.auth0User = {
-                sub: `mock-auth0-id-${role.toLowerCase()}`,
-                name: `Usuario MOCK (${role})`,
-                email: `test@${role.toLowerCase()}.com`
-            };
-
-            this.user = {
-                id: 1,
-                name: this.auth0User.name,
-                email: this.auth0User.email
-            };
-
-            this.loading = false;
+        async mockLogin(role) {
+            this.loading = true;
+            try {
+                if (role === 'STUDENT') {
+                    // Ahora usamos el login de desarrollo real para que la data en backend coincida con la de tu BD local
+                    await this.loginByEmail('unax.iriondo.51345@ikasle.egibide.org');
+                } else if (role === 'SCHOOL') {
+                    await this.loginByEmail('director@ikasle.egibide.org');
+                } else {
+                    // Fallback para otros si no están migrados
+                    this.isAuthenticated = true;
+                    this.role = role;
+                    this.token = "mock-jwt-token";
+                    sessionStorage.setItem('access_token', this.token);
+                    this.auth0User = {
+                        sub: `mock-auth0-id-${role.toLowerCase()}`,
+                        name: `Usuario MOCK (${role})`,
+                        email: `test@${role.toLowerCase()}.com`
+                    };
+                    this.user = { id: 1, name: this.auth0User.name, email: this.auth0User.email };
+                }
+            } catch (err) {
+                console.error("Error en mockLogin:", err);
+            } finally {
+                this.loading = false;
+            }
         },
 
         // ──────────────────────────────────────────────
@@ -107,6 +150,8 @@ export const useAuthStore = defineStore('auth', {
             this.isAuthenticated = false;
             this.role = null;
             sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('user_role');
+            console.log('Session cleared.');
         }
     }
 });

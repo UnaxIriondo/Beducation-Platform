@@ -12,6 +12,12 @@ import { useAuthStore } from '../store/auth';
 const routes = [
     // Rutas Públicas
     {
+        path: '/register',
+        name: 'RegisterInvitation',
+        component: () => import('../views/HomeView.vue'),
+        meta: { public: true }
+    },
+    {
         path: '/',
         name: 'Home',
         component: () => import('../views/HomeView.vue'),
@@ -41,6 +47,18 @@ const routes = [
         name: 'StudentOnboarding',
         component: () => import('../views/student/OnboardingView.vue'),
         meta: { requiresAuth: true, role: 'STUDENT' } // Constructor del CV y Profile
+    },
+    {
+        path: '/student/search',
+        name: 'StudentSearch',
+        component: () => import('../views/student/StudentSearchView.vue'),
+        meta: { requiresAuth: true, role: 'STUDENT' }
+    },
+    {
+        path: '/student/offers/:id',
+        name: 'OfferDetail',
+        component: () => import('../views/student/OfferDetailView.vue'),
+        meta: { requiresAuth: true, role: 'STUDENT' }
     },
     // Portal Escuela
     {

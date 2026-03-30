@@ -4,7 +4,7 @@
     <div class="glass-card p-6 md:p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-sky-500">
       <div>
         <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">
-          Hola, {{ userProfile?.firstName || authStore.user?.name || 'Estudiante' }} 👋
+          Hola, {{ authStore.user?.firstName || authStore.user?.name || 'Estudiante' }} 
         </h2>
         <p class="text-slate-600 mt-2 font-medium">
           Dashboard Universitario · Fase: <span class="font-bold text-sky-600 px-2 bg-sky-50 rounded-md">Buscando Prácticas</span>
@@ -15,7 +15,7 @@
         <button @click="$router.push('/student/onboarding')" class="btn-secondary whitespace-nowrap">
           Editar Perfil y CV
         </button>
-        <button class="btn-primary flex items-center gap-2 justify-center whitespace-nowrap bg-sky-600 hover:bg-sky-700">
+        <button @click="$router.push('/student/search')" class="btn-primary flex items-center gap-2 justify-center whitespace-nowrap bg-sky-600 hover:bg-sky-700 active:scale-95 transition-transform shadow-lg shadow-sky-500/20">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           Buscar Ofertas
         </button>
@@ -33,9 +33,10 @@
         </h3>
         <p class="text-slate-600 mt-1 mb-4">Basado en tus skills y destino (70-20-10 match), tenemos ofertas altamente compatibles para ti.</p>
         
-        <!-- Carrusel/Grilla matches -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="match in aiMatches.slice(0,3)" :key="match.opportunity.id" class="bg-white p-4 rounded-xl border border-slate-200 hover-scale cursor-pointer group">
+            <div v-for="match in aiMatches.slice(0,3)" :key="match.opportunity.id" 
+                 @click="$router.push('/student/offers/' + match.opportunity.id)"
+                 class="bg-white p-4 rounded-xl border border-slate-200 hover-scale cursor-pointer group hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-900/5 transition-all">
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-xs font-bold px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full">{{ Math.round(match.score * 100) }}% Comaptibilidad</span>
                     <span class="text-xs text-slate-400 border border-slate-200 px-2 rounded">{{ match.opportunity.country }}</span>
@@ -89,7 +90,6 @@
       <!-- Tareas Pendientes o Sidebar Info -->
       <div class="glass-card rounded-2xl p-6 bg-slate-800 text-white shadow-xl shadow-slate-900/10">
         <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-           <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
            Avisos del Sistema
         </h3>
         <ul class="space-y-4 relative">
@@ -118,32 +118,66 @@
 </template>
 
 <script setup>
-import { useAuthStore } from '../../store/auth';
 import { ref, onMounted } from 'vue';
-
+import { useAuthStore } from '../../store/auth';
+import api from '../../services/api';
 const authStore = useAuthStore();
 const applications = ref([]);
 const loadingApps = ref(true);
 const aiMatches = ref([]);
 
-// Simulation objects para previsualizar render
-onMounted(() => {
+onMounted(async () => {
+    if (!authStore.user) {
+        await authStore.fetchLocalUserProfile();
+    }
     
-    // Simulate API fetch delay
-    setTimeout(() => {
-        aiMatches.value = [
-            { score: 0.94, opportunity: { id: 10, title: 'Junior Data Analyst Intern', country: 'Germany' } },
-            { score: 0.81, opportunity: { id: 11, title: 'Software Developer Trainee', country: 'France' } }
-        ];
-
-        applications.value = [
-            { id: 1, opportunity: { title: 'Marketing Executive', country: 'Italy' }, status: 'APPLIED', createdAt: '2026-03-01T10:00:00Z' },
-            { id: 2, opportunity: { title: 'Backend Node.js Dev', country: 'Spain' }, status: 'OFFERED', createdAt: '2026-02-15T10:00:00Z' },
-            { id: 3, opportunity: { title: 'Admin Specialist', country: 'Germany' }, status: 'REJECTED', createdAt: '2026-01-20T10:00:00Z' }
-        ];
-        loadingApps.value = false;
-    }, 1500);
+    if (authStore.user && authStore.user.id) {
+        fetchAppData();
+    }
 });
+
+const fetchAppData = async () => {
+    loadingApps.value = true;
+    try {
+        const studentId = authStore.user.id;
+        
+        // 1. Fetch matches
+        try {
+            const matchResponse = await api.get(`/opportunities/matching/student/${studentId}`);
+            aiMatches.value = matchResponse; // Axios interceptor returns .data
+        } catch (e) {
+            console.warn("Could not fetch matches:", e);
+        }
+
+        // 2. Fetch applications
+        try {
+            const appResponse = await api.get(`/applications/student/${studentId}`);
+            // applicationController returns a Page<Application>
+            applications.value = appResponse.content || [];
+        } catch (e) {
+            console.warn("Could not fetch applications:", e);
+        }
+        
+    } catch(e) {
+        console.error("Error loading student dashboard data:", e);
+    } finally {
+        loadingApps.value = false;
+    }
+};
+
+const acceptOffer = async (appId) => {
+    try {
+        if (confirm("¿Estás seguro de que quieres aceptar esta oferta? Esto te llevará a la fase de validación por parte de tu escuela.")) {
+            await api.patch(`/applications/${appId}/accept`, null, {
+                params: { studentId: authStore.user.id }
+            });
+            await fetchAppData(); // Refrescar
+            alert("¡Oferta aceptada! Tu escuela revisará ahora el convenio.");
+        }
+    } catch (e) {
+        alert("Error al aceptar la oferta: " + (e.message || "Error desconocido"));
+    }
+};
 
 // Utility classes format
 const getStatusClasses = (status) => {

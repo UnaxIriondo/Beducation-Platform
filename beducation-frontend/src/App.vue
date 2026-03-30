@@ -7,15 +7,11 @@
         
         <!-- Logo animado -->
         <div class="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" @click="$router.push('/')">
-          <div class="bg-primary-600 rounded-lg p-2 flex items-center justify-center shadow-md">
-            <!-- Usando un svg simple para representar Beducation si los modulos iconific no cargan -->
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-            </svg>
+          <div class="overflow-hidden rounded-lg shadow-md border border-slate-100 flex items-center justify-center">
+            <img src="/logo.jpg" alt="B Education Logo" class="h-10 w-10 object-cover" />
           </div>
-          <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500">
-            BeDucation
+          <span class="text-2xl font-bold text-slate-900">
+            B Education
           </span>
         </div>
 
@@ -25,8 +21,11 @@
           
           <template v-else-if="!authStore.isAuthenticated">
             <div class="flex gap-2">
-              <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded">
+              <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded hover:bg-indigo-200 transition-colors">
                 Test Escuela
+              </button>
+              <button @click="mockLogin('STUDENT')" class="text-xs bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded hover:bg-sky-200 transition-colors">
+                Test Alumno
               </button>
             </div>
           </template>
