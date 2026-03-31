@@ -29,6 +29,13 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.beducation.security.SecurityUtils securityUtils;
+
+    @GetMapping("/me")
+    @Operation(summary = "Obtener info del administrador logueado")
+    public ResponseEntity<User> getMyProfile() {
+        return ResponseEntity.ok(securityUtils.getCurrentUser());
+    }
 
     // ── APROBACIONES DE COMPAÑÍAS Y ESCUELAS ── //
 

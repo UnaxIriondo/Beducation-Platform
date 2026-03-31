@@ -35,8 +35,18 @@
                   v-model="filters.keyword" 
                   placeholder="Habilidades, tech, rol..."
                   @keyup.enter="performSearch"
-                  class="bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-2xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all font-medium md:min-w-[240px]"
+                  class="bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-2xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all font-medium md:min-w-[200px]"
                 >
+            </div>
+
+            <div class="relative">
+                <select v-model="filters.educTypeId" class="appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 pr-10 rounded-2xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all font-medium min-w-[140px]">
+                    <option :value="null">Cualquier Título</option>
+                    <option v-for="type in educTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
             </div>
 
             <button @click="performSearch" class="btn-primary px-8 rounded-2xl shadow-lg shadow-primary-500/20 active:scale-95 transition-transform">
@@ -132,7 +142,26 @@ const loadOffers = async () => {
     }
 };
 
-onMounted(loadOffers);
+const educTypes = ref([]);
+
+const loadInitialData = async () => {
+    try {
+        const res = await api.get('/education-types');
+        educTypes.value = res;
+    } catch (e) {
+        console.warn("Could not load education types:", e);
+        // Fallback
+        educTypes.value = [
+            { id: 1, name: 'FP Básica' },
+            { id: 2, name: 'Grado Medio' },
+            { id: 3, name: 'Grado Superior (CFGS)' },
+            { id: 4, name: 'Grado Universitario' }
+        ];
+    }
+    loadOffers();
+};
+
+onMounted(loadInitialData);
 
 const performSearch = () => {
     loadOffers();
@@ -150,4 +179,5 @@ const goToOffer = (id) => {
 
 // Automatical search when selects change
 watch(() => filters.country, loadOffers);
+watch(() => filters.educTypeId, loadOffers);
 </script>

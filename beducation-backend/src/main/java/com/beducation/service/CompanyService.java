@@ -99,6 +99,13 @@ public class CompanyService {
     	return companyRepository.save(company);
     }
 
+    /** Obtiene perfil de empresa por ID de usuario base **/
+    @Transactional(readOnly = true)
+    public Company getCompanyByUserId(Long userId) {
+        return companyRepository.findByUserId(userId)
+            .orElseThrow(() -> new RuntimeException("No se encontró perfil de empresa para el usuario ID: " + userId));
+    }
+
     // ──────────────────────────────────────────────
     // CICLO DE VIDA CRUD DE OPORTUNIDADES (Opportunities)
     // ──────────────────────────────────────────────

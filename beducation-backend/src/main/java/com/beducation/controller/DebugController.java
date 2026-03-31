@@ -53,6 +53,17 @@ public class DebugController {
                 user = userRepository.save(user);
                 System.out.println("DEBUG: Creado usuario mock para estudiante invitado: " + trimmedEmail);
             }
+            // If still no user, create a generic mock user (e.g., for school testing)
+            if (user == null) {
+                user = User.builder()
+                    .email(trimmedEmail)
+                    .auth0Id("debug-mock-id-" + trimmedEmail.replace("@", "-at-"))
+                    .role(User.Role.SCHOOL)
+                    .status(User.UserStatus.ACTIVE)
+                    .build();
+                user = userRepository.save(user);
+                System.out.println("DEBUG: Creado usuario mock genérico para email: " + trimmedEmail);
+            }
         }
 
         if (user != null) {

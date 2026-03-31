@@ -128,9 +128,32 @@
                  <div v-if="cvFileName" class="bg-white border border-emerald-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
                      <span class="flex items-center gap-2 text-sm font-bold text-slate-700">
                          <svg class="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
-                         {{ cvFileName }}
+                         CV: {{ cvFileName }}
                      </span>
                      <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-medium">Adjunto</span>
+                 </div>
+
+                 <!-- Optional Docs -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div class="p-4 border border-slate-200 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer text-left" @click="$refs.coverLetterInput.click()">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Opcional</span>
+                            <svg v-if="clFileName" class="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">Carta de Presentación</p>
+                        <p class="text-[10px] text-slate-500">{{ clFileName || 'Añadir PDF motivacional' }}</p>
+                        <input type="file" ref="coverLetterInput" @change="handleClUpload" accept=".pdf" class="hidden" />
+                    </div>
+
+                    <div class="p-4 border border-slate-200 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer text-left" @click="$refs.photoInput.click()">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Opcional</span>
+                            <svg v-if="photoFileName" class="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">Foto de Perfil</p>
+                        <p class="text-[10px] text-slate-500">{{ photoFileName || 'Añadir imagen (JPG/PNG)' }}</p>
+                        <input type="file" ref="photoInput" @change="handlePhotoUpload" accept="image/*" class="hidden" />
+                    </div>
                  </div>
 
                  <div class="flex justify-between pt-8">
@@ -201,7 +224,15 @@ const form = ref({
 
 const cvFile = ref(null);
 const cvFileName = ref('');
+const clFile = ref(null);
+const clFileName = ref('');
+const photoFile = ref(null);
+const photoFileName = ref('');
+
 const fileInput = ref(null);
+const coverLetterInput = ref(null);
+const photoInput = ref(null);
+
 const loading = ref(false);
 const error = ref('');
 const success = ref(false);
@@ -255,6 +286,28 @@ const handleCvUpload = (event) => {
     }
 };
 
+const handleClUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        clFile.value = file;
+        clFileName.value = file.name;
+    } else {
+        alert("La carta de presentación debe ser un PDF.");
+        event.target.value = null;
+    }
+};
+
+const handlePhotoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        photoFile.value = file;
+        photoFileName.value = file.name;
+    } else {
+        alert("La foto debe ser una imagen válida.");
+        event.target.value = null;
+    }
+};
+
 const saveProfile = async () => {
     // Usar el ID del store como fuente de verdad definitiva si el local falló
     const effectiveId = studentId.value || authStore.user?.id;
@@ -304,16 +357,20 @@ const saveProfile = async () => {
             countryPreferences: form.value.countryPreferences
         });
 
-        // 3. Subir CV si se ha seleccionado uno nuevo
-        if (cvFile.value) {
+        // 3. Subir Documentos
+        const uploadDoc = async (file, type) => {
             const formData = new FormData();
-            formData.append('file', cvFile.value);
-            formData.append('type', 'CV');
-            await api.post(`/students/${studentId.value}/documents`, formData, {
+            formData.append('file', file);
+            formData.append('type', type);
+            await api.post(`/students/${effectiveId}/documents`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
-                params: { type: 'CV' }
+                params: { type: type }
             });
-        }
+        };
+
+        if (cvFile.value) await uploadDoc(cvFile.value, 'CV');
+        if (clFile.value) await uploadDoc(clFile.value, 'COVER_LETTER');
+        if (photoFile.value) await uploadDoc(photoFile.value, 'PHOTO');
         
         success.value = true;
         

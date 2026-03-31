@@ -21,6 +21,18 @@
         </button>
       </div>
     </div>
+
+    <!-- Perfil Completion Progress -->
+    <div v-if="profileProgress < 100" class="glass-card p-6 rounded-2xl border border-sky-100 bg-sky-50/30">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-bold text-slate-700">Progreso de tu Perfil</span>
+            <span class="text-sm font-black text-sky-600">{{ profileProgress }}%</span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden border border-slate-100 p-0.5">
+            <div class="bg-gradient-to-r from-sky-400 to-sky-600 h-full rounded-full transition-all duration-1000 shadow-sm" :style="{ width: profileProgress + '%' }"></div>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2 font-medium">Completa tu perfil al 100% para maximizar tus posibilidades de match.</p>
+    </div>
     
     <!-- AI Suggestion & MatchMaker Alert -->
     <div v-if="aiMatches.length > 0" class="bg-gradient-to-r from-emerald-50 to-primary-50 border border-emerald-100 p-6 rounded-2xl shadow-sm relative overflow-hidden">
@@ -74,13 +86,23 @@
                     <p class="text-sm text-slate-500">{{ app.opportunity.country }} · Aplicado: {{ new Date(app.createdAt).toLocaleDateString() }}</p>
                 </div>
                 <!-- Status Badge -->
-                <div class="shrink-0 flex items-center gap-3">
-                    <span :class="getStatusClasses(app.status)" class="px-3 py-1 text-xs font-bold rounded-full">
+                <div class="shrink-0 flex items-center gap-2 flex-wrap">
+                    <span :class="getStatusClasses(app.status)" class="px-3 py-1 text-[10px] font-bold rounded-full border">
                         {{ app.status }}
                     </span>
                     <!-- Action Buttons basadas en workflow -->
-                    <button v-if="app.status === 'OFFERED'" @click="acceptOffer(app.id)" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 font-bold text-xs rounded transition-colors">
-                        ACEPTAR OFERTA
+                    <div v-if="app.status === 'OFFERED'" class="flex gap-2">
+                        <button @click="rejectOffer(app.id)" class="px-3 py-1 font-bold text-[10px] rounded text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors uppercase">
+                            Rechazar
+                        </button>
+                        <button @click="acceptOffer(app.id)" class="bg-emerald-500 text-white shadow-sm hover:shadow-emerald-200 px-3 py-1 font-bold text-[10px] rounded transition-all uppercase">
+                            Aceptar
+                        </button>
+                    </div>
+                    <button v-if="['APPLIED', 'INTERESTED', 'INTERVIEW_SCHEDULED'].includes(app.status)" 
+                            @click="withdrawApplication(app.id)" 
+                            class="px-3 py-1 text-slate-400 hover:text-rose-500 font-bold text-[10px] transition-colors uppercase">
+                        Retirar
                     </button>
                 </div>
             </div>
@@ -118,13 +140,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
 const authStore = useAuthStore();
 const applications = ref([]);
 const loadingApps = ref(true);
 const aiMatches = ref([]);
+
+const profileProgress = computed(() => {
+    if (!authStore.user) return 0;
+    const user = authStore.user;
+    let score = 0;
+    if (user.firstName && user.lastName) score += 20;
+    if (user.phone) score += 10;
+    if (user.educationType) score += 10;
+    if (user.motivation && user.motivation.length >= 100) score += 20;
+    if (user.keywords && user.keywords.length > 0) score += 20;
+    if (user.countryPreferences && user.countryPreferences.length > 0) score += 10;
+    if (user.documents && user.documents.some(d => d.documentType === 'CV')) score += 10;
+    return score;
+});
 
 onMounted(async () => {
     if (!authStore.user) {
@@ -171,11 +207,39 @@ const acceptOffer = async (appId) => {
             await api.patch(`/applications/${appId}/accept`, null, {
                 params: { studentId: authStore.user.id }
             });
-            await fetchAppData(); // Refrescar
+            await fetchAppData(); 
             alert("¡Oferta aceptada! Tu escuela revisará ahora el convenio.");
         }
     } catch (e) {
         alert("Error al aceptar la oferta: " + (e.message || "Error desconocido"));
+    }
+};
+
+const rejectOffer = async (appId) => {
+    try {
+        if (confirm("¿Seguro que deseas rechazar esta oferta? Esta acción es definitiva.")) {
+            await api.patch(`/applications/${appId}/reject-offer`, null, {
+                params: { studentId: authStore.user.id }
+            });
+            await fetchAppData();
+            alert("Oferta rechazada.");
+        }
+    } catch (e) {
+        alert("Error al rechazar oferta: " + (e.message || "Error desconocido"));
+    }
+};
+
+const withdrawApplication = async (appId) => {
+    try {
+        if (confirm("¿Deseas retirar tu candidatura para esta oferta?")) {
+            await api.delete(`/applications/${appId}/withdraw`, {
+                params: { studentId: authStore.user.id }
+            });
+            await fetchAppData();
+            alert("Candidatura retirada.");
+        }
+    } catch (e) {
+        alert("Error al retirar candidatura: " + (e.message || "Error desconocido"));
     }
 };
 

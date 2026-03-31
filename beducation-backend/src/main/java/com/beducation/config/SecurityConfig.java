@@ -93,7 +93,8 @@ public class SecurityConfig {
 
                 // Registro de escuelas y empresas (antes de autenticarse) y Debug Login
                 .requestMatchers(HttpMethod.POST, "/schools", "/companies").permitAll()
-                .requestMatchers("/debug/**").permitAll()
+                // Permit debug endpoints under the API context path (development only)
+                .requestMatchers("/api/debug/**").permitAll()
 
                 // Todos los demás endpoints requieren JWT válido
                 .anyRequest().authenticated()
@@ -140,14 +141,22 @@ public JwtDecoder jwtDecoder() {
                 claims.put("sub", auth0Id);
                 claims.put("iss", issuerUri);
                 claims.put("aud", Collections.singletonList(audience));
-                // Importante: No ponemos el prefijo SCOPE_ aquí porque el converter por defecto ya lo añade 
-                // a partir del claim "scope" o "scp".
-                claims.put("scope", role);
-                claims.put("scp", Collections.singletonList(role));
-                claims.put("authorities", Collections.singletonList("SCOPE_" + role));
-                // Auth0 Custom Claims for profile data matching Vue store expectations
-                claims.put("https://beducation.com/role", role);
                 
+                // Spring OAuth2 default converter follows certain claims
+                claims.put("scope", role);
+                claims.put("scp", role.contains(" ") ? Arrays.asList(role.split(" ")) : Collections.singletonList(role));
+                // Add the explicit authorities claim with SCOPE_ prefix for each role
+                List<String> auths = new java.util.ArrayList<>();
+                for (String r : role.split(" ")) {
+                    auths.add("SCOPE_" + r);
+                }
+                claims.put("authorities", auths);
+                
+                // Auth0 custom claims for profile data matching Vue store expectations
+                claims.put("https://beducation.com/role", role);
+                claims.put("https://beducation.com/email", auth0Id.contains("-at-") ? auth0Id.replace("-at-", "@").replace("debug-mock-id-", "") : "test@debug.com");
+                
+                System.out.println("DEBUG: Jwt claims created for user " + auth0Id + " with role " + role);
                 return new Jwt(token, Instant.now(), Instant.now().plusSeconds(3600), headers, claims);
             }
             System.err.println("DEBUG ERROR: Token no reconocido: " + token);

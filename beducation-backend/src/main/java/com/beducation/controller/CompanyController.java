@@ -32,6 +32,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class CompanyController {
 
     private final CompanyService companyService;
+    private final com.beducation.security.SecurityUtils securityUtils;
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAuthority('SCOPE_COMPANY')")
+    @Operation(summary = "Obtener perfil de la empresa logueada", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Company> getMyProfile() {
+        System.out.println("DEBUG: CompanyController.getMyProfile() invocado");
+        com.beducation.model.User user = securityUtils.getCurrentUser();
+        return ResponseEntity.ok(companyService.getCompanyByUserId(user.getId()));
+    }
 
     @PostMapping
     @Operation(summary = "Registro inicial público de una Empresa", description = "Registra una compañia que requiere aprobación administrativa.")

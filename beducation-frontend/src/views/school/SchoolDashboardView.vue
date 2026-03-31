@@ -241,51 +241,75 @@
          </div>
          <div class="p-8">
              <h4 class="text-sm font-bold text-slate-700 uppercase mb-6 tracking-wide">Funnel del Estudiante</h4>
-             <div class="relative">
+             
+             <!-- Si no tiene aplicaciones -->
+             <div v-if="!selectedStudent?.latestApplication" class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <p class="text-sm text-slate-500">Este alumno aún no ha postulado a ninguna oferta.</p>
+                  <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold">Estado: {{ selectedStudent?.profileComplete ? 'Buscando' : 'Completando Perfil' }}</p>
+             </div>
+
+             <div v-else class="relative">
                  <!-- Tracking Line -->
                  <div class="absolute left-[19px] top-6 bottom-4 w-0.5 bg-slate-100"></div>
                  
                  <div class="space-y-6 relative">
-                     <!-- Step 1 -->
+                     <!-- Step 1: Registro -->
                      <div class="flex items-start gap-4">
-                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10" :class="selectedStudent?.profileComplete ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-600'">
-                             <svg v-if="selectedStudent?.profileComplete" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                             <span v-else class="text-sm font-bold">1</span>
+                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10 bg-emerald-500 text-white shadow-sm">
+                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                          </div>
                          <div>
                              <h4 class="text-md font-bold text-slate-800">Registro & Onboarding</h4>
-                             <p class="text-sm text-slate-500">{{ selectedStudent?.profileComplete ? 'Completado. CV y perfil listos.' : 'Pendiente o incompleto.' }}</p>
+                             <p class="text-sm text-slate-500">Perfil completado y validado.</p>
                          </div>
                      </div>
-                     <!-- Step 2 -->
+
+                     <!-- Step 2: Interés / Entrevista -->
                      <div class="flex items-start gap-4">
-                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10" :class="selectedStudent?.profileComplete ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-400'">
-                             <span class="text-sm font-bold">2</span>
+                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10" 
+                              :class="isAtLeast(selectedStudent.latestApplication.status, 'INTERESTED') ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-100 text-slate-400'">
+                             <svg v-if="isAtLeast(selectedStudent.latestApplication.status, 'INTERESTED')" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                             <span v-else class="text-sm font-bold">2</span>
                          </div>
                          <div>
-                             <h4 class="text-md font-bold" :class="selectedStudent?.profileComplete ? 'text-slate-800' : 'text-slate-400'">Test de Idiomas / Habilidades</h4>
-                             <p class="text-sm" :class="selectedStudent?.profileComplete ? 'text-slate-500' : 'text-slate-400'">Resultados: B2 Inglés validado.</p>
+                             <h4 class="text-md font-bold" :class="isAtLeast(selectedStudent.latestApplication.status, 'INTERESTED') ? 'text-slate-800' : 'text-slate-400'">Candidaturas / Entrevistas</h4>
+                             <p class="text-sm" :class="isAtLeast(selectedStudent.latestApplication.status, 'INTERESTED') ? 'text-slate-500' : 'text-slate-400'">
+                                {{ getStep2Text(selectedStudent.latestApplication.status) }}
+                             </p>
+                             <span v-if="selectedStudent.latestApplication.status === 'INTERESTED'" class="mt-2 inline-block px-2 py-1 bg-sky-100 text-sky-700 text-[10px] font-bold rounded-md border border-sky-200">INTERÉS EXPRESADO</span>
+                             <span v-if="selectedStudent.latestApplication.status === 'INTERVIEW_SCHEDULED'" class="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-md border border-amber-200">ENTREVISTA AGENDADA</span>
                          </div>
                      </div>
-                     <!-- Step 3 -->
+
+                     <!-- Step 3: Oferta -->
                      <div class="flex items-start gap-4">
-                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10 bg-amber-400 text-white shadow-md ring-4 ring-amber-50">
-                             <span class="text-sm font-bold">3</span>
+                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10"
+                              :class="isAtLeast(selectedStudent.latestApplication.status, 'OFFERED') ? 'bg-amber-400 text-white shadow-md ring-4 ring-amber-50' : 'bg-slate-100 text-slate-400'">
+                             <svg v-if="isAtLeast(selectedStudent.latestApplication.status, 'OFFERED')" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                             <span v-else class="text-sm font-bold">3</span>
                          </div>
                          <div>
-                             <h4 class="text-md font-bold text-slate-800">Candidaturas / Entrevistas</h4>
-                             <p class="text-sm text-slate-500">2 Entrevistas agendadas con empresas en Irlanda y UK.</p>
-                             <span class="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-md border border-amber-200">En proceso</span>
+                             <h4 class="text-md font-bold" :class="isAtLeast(selectedStudent.latestApplication.status, 'OFFERED') ? 'text-slate-800' : 'text-slate-400'">Oferta Realizada</h4>
+                             <p class="text-sm" :class="isAtLeast(selectedStudent.latestApplication.status, 'OFFERED') ? 'text-slate-500' : 'text-slate-400'">
+                                {{ getStep3Text(selectedStudent.latestApplication.status) }}
+                             </p>
+                             <span v-if="selectedStudent.latestApplication.status === 'OFFERED'" class="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-md border border-amber-200 uppercase">Esperando aceptación del alumno</span>
                          </div>
                      </div>
-                     <!-- Step 4 -->
+
+                     <!-- Step 4: Validación & Confirmación -->
                      <div class="flex items-start gap-4">
-                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10 bg-slate-100 text-slate-400">
-                             <span class="text-sm font-bold">4</span>
+                         <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10"
+                              :class="isAtLeast(selectedStudent.latestApplication.status, 'CONFIRMED') ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'">
+                             <svg v-if="isAtLeast(selectedStudent.latestApplication.status, 'CONFIRMED')" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                             <span v-else class="text-sm font-bold">4</span>
                          </div>
                          <div>
-                             <h4 class="text-md font-bold text-slate-400">Acuerdo Creado / Aceptado</h4>
-                             <p class="text-sm text-slate-400">Firma del Learning Agreement pendiente.</p>
+                             <h4 class="text-md font-bold" :class="isAtLeast(selectedStudent.latestApplication.status, 'CONFIRMED') ? 'text-slate-800' : 'text-slate-400'">Acuerdo Confirmado</h4>
+                             <p class="text-sm" :class="isAtLeast(selectedStudent.latestApplication.status, 'CONFIRMED') ? 'text-slate-500' : 'text-slate-400'">
+                                {{ getStep4Text(selectedStudent.latestApplication.status) }}
+                             </p>
+                             <span v-if="selectedStudent.latestApplication.status === 'CONFIRMED'" class="mt-2 inline-block px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md border border-emerald-200 uppercase tracking-tighter">PLACEMENT COMPLETADO</span>
                          </div>
                      </div>
                  </div>
@@ -435,7 +459,22 @@ const fetchStudents = async () => {
     try {
         console.log(`SchoolDashboard: Fetching students for school ${schoolId.value}...`);
         const res = await api.get(`/schools/${schoolId.value}/students`);
-        students.value = (res && res.content) ? res.content : (Array.isArray(res) ? res : []);
+        const studentList = (res && res.content) ? res.content : (Array.isArray(res) ? res : []);
+        
+        // Fetch latest application for each student to populate funnel
+        for (let std of studentList) {
+            try {
+                const appRes = await api.get(`/applications/student/${std.id}`);
+                const apps = appRes.content || [];
+                if (apps.length > 0) {
+                    // Ordenar por fecha descendente para obtener la más reciente
+                    std.latestApplication = apps.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+                }
+            } catch (err) {
+                console.warn(`Could not fetch applications for student ${std.id}:`, err);
+            }
+        }
+        students.value = studentList;
     } catch (e) {
         console.error("Error fetching students:", e);
     }
@@ -643,6 +682,30 @@ const executeAction = async () => {
     } finally {
         isProcessingAction.value = false;
     }
+};
+
+const isAtLeast = (status, target) => {
+    const order = ['APPLIED', 'INTERESTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'ADMIN_APPROVED', 'CONFIRMED'];
+    return order.indexOf(status) >= order.indexOf(target);
+};
+
+const getStep2Text = (status) => {
+    if (status === 'APPLIED') return 'Esperando revisión de la empresa.';
+    if (status === 'INTERESTED') return 'La empresa ha mostrado interés.';
+    if (status === 'INTERVIEW_SCHEDULED') return 'Entrevista concertarda por videollamada.';
+    if (isAtLeast(status, 'OFFERED')) return 'Fase de evaluación completada.';
+    return 'Pendiente de inicio.';
+};
+
+const getStep3Text = (status) => {
+    if (isAtLeast(status, 'OFFERED')) return 'La empresa ha enviado una propuesta formal.';
+    return 'A la espera de propuesta tras entrevistas.';
+};
+
+const getStep4Text = (status) => {
+    if (status === 'CONFIRMED') return 'Convenio firmado por todas las partes.';
+    if (status === 'ADMIN_APPROVED') return 'Validado por Admin, esperando firma Escuela.';
+    return 'El acuerdo se generará tras la aceptación.';
 };
 
 // Re-intentar carga si el user/id aparece después (útil en mocks o refrescos)
