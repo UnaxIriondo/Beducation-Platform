@@ -1,5 +1,10 @@
 #  BeDucation Platform
 # AÑADIR QUE BORJA PUEDA IMPORTARLOS COMO ADMIN LOS CSV Y QUE LUEGO LOS ALUMNOS RELLENEN SUS DATOS.
+# IMPORTANTE PARA EL 20 DE MAYO:
+   - ESTUDIANTES: Piden permiso al administrador para ver la foto(leer y aceptar oliticas de privacidad???)
+   - TODAS las fotos se guardan en el mismo sitio
+   - Empresas, colegios y alumnos que tengan acceso a la aplicacion pueden verlas
+   - ADMIN: tiene que subir las fotos que le pase el fotografo(o el fotografo se le da acceso)
 
 BeDucation is a comprehensive platform designed to streamline the management of international student placements. It serves as a bridge between schools, students, and companies, providing a unified dashboard for tracking applications, managing profiles, and coordinating the internship process.
 
