@@ -69,6 +69,9 @@ app:
     url: ${FRONTEND_URL:http://localhost:5173}
   auth0:
     audience: ${AUTH0_AUDIENCE:https://api.beducation.com}
+  jwt:
+    secret: ${JWT_SECRET:beducation-local-secret-key-32-chars-minimum-length}
+    expiration: ${JWT_EXPIRATION_MS:86400000} # 24 horas
 
 springdoc:
   api-docs:

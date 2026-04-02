@@ -32,72 +32,88 @@ public class SecurityUtils {
 
     /**
      * Obtiene el usuario autenticado actual desde la base de datos.
-     * Usa el "sub" del JWT para buscar en la tabla users.
+     * Busca primero por auth0Id (si es JWT) y si no, por Email.
      *
      * @return el User autenticado
      * @throws RuntimeException si no hay usuario autenticado o no existe en BD
      */
     public User getCurrentUser() {
-        String auth0Id = getCurrentAuth0Id();
-        return userRepository.findByAuth0Id(auth0Id)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado para auth0Id: " + auth0Id));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new RuntimeException("No hay usuario autenticado en el contexto de seguridad");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof Jwt jwt) {
+            String auth0Id = jwt.getSubject();
+            return userRepository.findByAuth0Id(auth0Id)
+                .or(() -> userRepository.findByEmail(jwt.getClaimAsString("email")))
+                .or(() -> userRepository.findByEmail(jwt.getClaimAsString("https://beducation.com/email")))
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado para auth0Id/Email del JWT: " + auth0Id));
+        } else if (principal instanceof String email) {
+            return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado para el email: " + email));
+        }
+
+        throw new RuntimeException("Tipo de principal no soportado: " + principal.getClass().getName());
     }
 
     /**
-     * Extrae el "sub" (identificador de Auth0) del JWT actual.
-     * Lanza excepción si no hay autenticación activa.
-     *
-     * @return el auth0Id del usuario autenticado
+     * Extrae el identificado "sub" o el email dependiendo del tipo de login.
      */
     public String getCurrentAuth0Id() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
-            throw new RuntimeException("No hay usuario autenticado en el contexto de seguridad");
+        if (authentication == null) throw new RuntimeException("No autenticado");
+        
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getSubject();
         }
-        return jwt.getSubject(); // El "sub" del JWT es el auth0Id
+        return null; // Local users don't have auth0Id
     }
 
     /**
-     * Extrae el email del usuario autenticado desde el JWT.
-     * Auth0 incluye el email en el claim "https://beducation.com/email"
-     * o directamente como "email" dependiendo de la configuración.
-     *
-     * @return email del usuario autenticado
+     * Extrae el email del usuario autenticado.
      */
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            // Intentar con claim personalizado primero, luego con el estándar
+        if (authentication == null) return null;
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
             String email = jwt.getClaimAsString("https://beducation.com/email");
-            if (email == null) {
-                email = jwt.getClaimAsString("email");
-            }
+            return (email != null) ? email : jwt.getClaimAsString("email");
+        } else if (principal instanceof String email) {
             return email;
         }
         return null;
     }
 
     /**
-     * Obtiene el rol del usuario autenticado desde el JWT.
-     * Auth0 incluye roles customizados en el claim
-     * "https://beducation.com/role" (configurado en Auth0 Actions).
-     *
-     * @return rol como String (SCHOOL, STUDENT, COMPANY, ADMIN)
+     * Obtiene el rol del usuario autenticado.
      */
     public String getCurrentUserRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            return jwt.getClaimAsString("https://beducation.com/role");
+        if (authentication == null) return null;
+
+        // Intentar desde JWT
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            String role = jwt.getClaimAsString("https://beducation.com/role");
+            if (role != null) return role;
         }
-        return null;
+        
+        // Intentar desde las autoridades de Spring (SCOPE_ROLE)
+        return authentication.getAuthorities().stream()
+                .map(auth -> auth.getAuthority().replace("SCOPE_", ""))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
      * Verifica si el usuario autenticado tiene un rol específico.
-     * @param role rol a verificar (ej. "ADMIN", "SCHOOL")
-     * @return true si el usuario tiene ese rol
      */
     public boolean hasRole(String role) {
-        return role.equals(getCurrentUserRole());
+        String currentRole = getCurrentUserRole();
+        return currentRole != null && currentRole.equals(role);
     }
 }

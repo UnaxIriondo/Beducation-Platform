@@ -52,11 +52,14 @@ public class EmailService {
     // EMAILS DE INVITACIÓN / REGISTRO
     // ──────────────────────────────────────────────
 
-    public void sendStudentInvitationEmail(String email, School school) {
+    public void sendStudentInvitationEmail(String email, String password, School school) {
         String subject = "Invitación a BeDucation de " + school.getName();
         String text = "Hola,\n\nTu escuela " + school.getName() + " te ha invitado a unirte a BeDucation, " +
             "la plataforma para encontrar prácticas internacionales.\n\n" +
-            "Regístrate aquí: " + frontendUrl + "/register?email=" + email + "\n\n" +
+            "Tus credenciales de acceso son:\n" +
+            "   - Email: " + email + "\n" +
+            "   - Contraseña temporal: " + password + "\n\n" +
+            "Inicia sesión aquí para completar tu perfil: " + frontendUrl + "/login\n\n" +
             "El equipo de BeDucation.";
         sendSimpleMail(email, subject, text);
     }

@@ -27,6 +27,9 @@
               <button @click="mockLogin('STUDENT')" class="text-xs bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded hover:bg-sky-200 transition-colors">
                 Test Alumno
               </button>
+              <button @click="$router.push('/login')" class="text-xs bg-emerald-600 text-white font-bold px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all shadow-sm">
+                Acceso Alumnos (Password)
+              </button>
             </div>
           </template>
 
@@ -89,6 +92,9 @@ onMounted(() => {
       user,
       getAccessTokenSilently
     });
+  } else if (authStore.isAuthenticated && authStore.role && !authStore.user) {
+    // Si el usuario recargó la página (F5) con un mock login activo, restauramos su perfil
+    authStore.fetchLocalUserProfile();
   }
 });
 
@@ -99,8 +105,10 @@ watch(isAuthenticated, (newState) => {
       user,
       getAccessTokenSilently
     });
-  } else {
-    authStore.clearSession();
+  } else if (!authStore.isAuthenticated) {
+      // Solo limpiamos si TAMBIÉN el mock origin está desautenticado,
+      // para evitar que auth0 borre nuestra sesion mock local por error
+      authStore.clearSession();
   }
 });
 
@@ -108,8 +116,8 @@ const login = () => {
   loginWithRedirect();
 };
 
-const mockLogin = (role) => {
-  authStore.mockLogin(role);
+const mockLogin = async (role) => {
+  await authStore.mockLogin(role);
   // Redireccionar al dashboard correspondiente
   if (role === 'STUDENT') router.push('/student/dashboard');
   if (role === 'COMPANY') router.push('/company/dashboard');

@@ -146,16 +146,16 @@ public class SchoolService {
     public Student inviteStudent(Long schoolId, String firstName, String lastName, String email) {
         School school = getValidatedApprovedSchool(schoolId);
         
-        // Delegar en StudentService para manejar la transacción independiente si fuera necesario,
-        // aunque aquí la llamamos directamente.
-        Student student = studentService.inviteStudent(school, firstName, lastName, email, null);
+        // Delegar en StudentService para manejar la transacción independiente
+        StudentService.InvitationResult result = studentService.inviteStudent(school, firstName, lastName, email, null);
         
-        if (student != null) {
-            emailService.sendStudentInvitationEmail(email, school);
+        if (result != null) {
+            emailService.sendStudentInvitationEmail(email, result.clearPassword(), school);
             log.info("Estudiante invitado: {} por la escuela {}", email, school.getName());
+            return result.student();
         }
         
-        return student;
+        return null;
     }
 
     /**
@@ -223,12 +223,12 @@ public class SchoolService {
                     try {
                         // Llamamos a StudentService.inviteStudent que tiene REQUIRES_NEW
                         // Esto asegura que cada invitación sea atómica.
-                        Student student = studentService.inviteStudent(school, firstName, lastName, email, eduCode);
+                        StudentService.InvitationResult result = studentService.inviteStudent(school, firstName, lastName, email, eduCode);
                         
-                        if (student != null) {
-                            importedStudents.add(student);
+                        if (result != null) {
+                            importedStudents.add(result.student());
                             // Intentar enviar email (captura su propia excepción)
-                            emailService.sendStudentInvitationEmail(email, school);
+                            emailService.sendStudentInvitationEmail(email, result.clearPassword(), school);
                         }
                     } catch (Exception e) {
                         log.error("Fallo al procesar estudiante en fila {}: {}", rowIdx, e.getMessage());

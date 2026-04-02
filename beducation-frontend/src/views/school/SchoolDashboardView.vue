@@ -453,21 +453,17 @@ const studentsToValidate = ref([]);
 
 const fetchStudents = async () => {
     if (!schoolId.value) {
-        console.warn("SchoolDashboard: Aborting fetchStudents due to missing schoolId");
         return;
     }
     try {
-        console.log(`SchoolDashboard: Fetching students for school ${schoolId.value}...`);
         const res = await api.get(`/schools/${schoolId.value}/students`);
         const studentList = (res && res.content) ? res.content : (Array.isArray(res) ? res : []);
         
-        // Fetch latest application for each student to populate funnel
         for (let std of studentList) {
             try {
                 const appRes = await api.get(`/applications/student/${std.id}`);
                 const apps = appRes.content || [];
                 if (apps.length > 0) {
-                    // Ordenar por fecha descendente para obtener la más reciente
                     std.latestApplication = apps.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
                 }
             } catch (err) {
@@ -509,7 +505,11 @@ const closeInviteModal = () => {
 };
 
 const submitInvite = async () => {
-    if (!schoolId.value) return;
+    console.log("Submit clicked. schoolId is:", schoolId.value, "authStore user is:", authStore.user);
+    if (!schoolId.value) {
+        alert(`Error interno del frontal: El ID de la escuela no está definido. store.user = ${JSON.stringify(authStore.user)}`);
+        return;
+    }
     isInviting.value = true;
     try {
         await api.post(`/schools/${schoolId.value}/invite-student`, null, {
@@ -711,7 +711,6 @@ const getStep4Text = (status) => {
 // Re-intentar carga si el user/id aparece después (útil en mocks o refrescos)
 watch(schoolId, (newId) => {
     if (newId) {
-        console.log("SchoolDashboard: schoolId detected, fetching data...");
         fetchStudents();
         fetchPendingApplications();
     }

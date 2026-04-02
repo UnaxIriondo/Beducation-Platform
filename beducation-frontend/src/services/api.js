@@ -19,7 +19,8 @@ api.interceptors.request.use(async (config) => {
     const method = config.method;
     const isPublicRoute = (url.match(/^\/schools\/?$/) && method === 'post') ||
         (url.match(/^\/companies\/?$/) && method === 'post') ||
-        url.includes('/debug/');
+        url.includes('/debug/') ||
+        url.includes('/auth/');
 
     if (!isPublicRoute) {
         try {

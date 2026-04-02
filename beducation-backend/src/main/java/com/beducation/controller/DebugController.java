@@ -1,8 +1,10 @@
 package com.beducation.controller;
 
+import com.beducation.model.School;
 import com.beducation.model.User;
 import com.beducation.repository.UserRepository;
 import com.beducation.repository.StudentRepository;
+import com.beducation.repository.SchoolRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,22 @@ public class DebugController {
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
+    private final SchoolRepository schoolRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @GetMapping("/fix-password")
+    @Operation(summary = "REPARAR PASSWORDS (Solo Dev)", description = "Sobreescribe el password de Unax con '123456' para pruebas.")
+    public String fixPassword() {
+        String email = "unax.iriondo.51345@ikasle.egibide.org";
+        var userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setPassword(passwordEncoder.encode("123456"));
+            userRepository.save(user);
+            return "OK: Password de " + email + " reseteada a '123456'";
+        }
+        return "ERROR: No se hallo al usuario " + email;
+    }
 
     @GetMapping("/login")
     @Operation(summary = "Login rápido por email (Sin contraseña)", description = "Busca al usuario por email. Si no existe pero es un alumno invitado, crea el usuario mock al vuelo.")
@@ -63,6 +81,24 @@ public class DebugController {
                     .build();
                 user = userRepository.save(user);
                 System.out.println("DEBUG: Creado usuario mock genérico para email: " + trimmedEmail);
+            }
+        }
+
+        // Ensure mock schools have a School entity
+        if (user != null && user.getRole() == User.Role.SCHOOL) {
+            boolean hasSchool = schoolRepository.findByUserId(user.getId()).isPresent();
+            if (!hasSchool) {
+                School mockSchool = School.builder()
+                    .user(user)
+                    .name("Mock Debug School " + user.getId())
+                    .country("Spain")
+                    .city("Debug City")
+                    .address("Debug Address 123")
+                    .status(School.ApprovalStatus.APPROVED)
+                    .institutionType(School.InstitutionType.CONCERTADA)
+                    .build();
+                schoolRepository.save(mockSchool);
+                System.out.println("DEBUG: Creado School mock para usuario: " + trimmedEmail);
             }
         }
 

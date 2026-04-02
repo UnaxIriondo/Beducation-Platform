@@ -47,10 +47,17 @@ public class User {
     /**
      * Identificador único de Auth0 (campo "sub" del JWT).
      * Ejemplo: "auth0|60d21b4667701d2bd0fe456f"
-     * Nunca puede ser nulo ni repetirse.
+     * Nunca puede ser nulo ni repetirse (solo obligatorio si es Auth0).
      */
-    @Column(name = "auth0_id", unique = true, nullable = false)
+    @Column(name = "auth0_id", unique = true, nullable = true)
     private String auth0Id;
+
+    /**
+     * Contraseña hasheada para usuarios que utilizan inicio de sesión
+     * local provisto por el backend (Ej. estudiantes invitados).
+     */
+    @Column(name = "password")
+    private String password;
 
     /**
      * Email del usuario. Extraído del token JWT al primer login.

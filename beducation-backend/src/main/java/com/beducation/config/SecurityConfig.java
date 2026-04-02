@@ -22,6 +22,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * ============================================================
@@ -61,6 +63,26 @@ public class SecurityConfig {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:https://dev-placeholder.auth0.com/}") String issuerUri,
+                          @Value("${app.auth0.audience}") String audience,
+                          @Value("${app.frontend.url}") String frontendUrl,
+                          JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.issuerUri = issuerUri;
+        this.audience = audience;
+        this.frontendUrl = frontendUrl;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    /**
+     * Bean para encriptar contraseñas.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     /**
      * Cadena principal de filtros de seguridad HTTP.
      * Define qué endpoints son públicos y cuáles requieren autenticación.
@@ -91,14 +113,19 @@ public class SecurityConfig {
                     "/swagger-ui.html"
                 ).permitAll()
 
-                // Registro de escuelas y empresas (antes de autenticarse) y Debug Login
+                // Registro de escuelas y empresas y Auth Local
                 .requestMatchers(HttpMethod.POST, "/schools", "/companies").permitAll()
+                .requestMatchers("/auth/**").permitAll()
+                
                 // Permit debug endpoints under the API context path (development only)
-                .requestMatchers("/api/debug/**").permitAll()
+                .requestMatchers("/debug/**").permitAll()
 
                 // Todos los demás endpoints requieren JWT válido
                 .anyRequest().authenticated()
             )
+
+            // ── Filtro JWT Local antes del Resource Server
+            .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
 
             // ── Configurar como Resource Server OAuth2 (valida JWT automáticamente buscando el Bean JwtDecoder)
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));

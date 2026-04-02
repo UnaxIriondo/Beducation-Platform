@@ -110,6 +110,38 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
+        /**
+         * Inicio de sesión local (híbrido) con Email y Contraseña.
+         * Usado por estudiantes invitados.
+         */
+        async localLogin(email, password) {
+            this.loading = true;
+            try {
+                const response = await api.post('/auth/login', { email, password });
+                
+                this.token = response.token;
+                this.role = response.role;
+                this.isAuthenticated = true;
+                
+                sessionStorage.setItem('access_token', this.token);
+                sessionStorage.setItem('user_role', this.role);
+                
+                // Simular objeto auth0User para compatibilidad con la interfaz
+                this.auth0User = {
+                    email: response.email,
+                    name: response.email.split('@')[0]
+                };
+
+                await this.fetchLocalUserProfile();
+                return true;
+            } catch (err) {
+                console.error('Local login failed:', err);
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         // ──────────────────────────────────────────────
         // MOCK LOGIN PARA PRUEBAS (Evita el paso real de Auth0)
         // ──────────────────────────────────────────────

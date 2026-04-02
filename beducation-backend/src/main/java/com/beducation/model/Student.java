@@ -80,6 +80,13 @@ public class Student {
     @Column(name = "invitation_email", nullable = false, unique = true)
     private String invitationEmail;
 
+    /**
+     * Contraseña temporal/aleatoria hasheada, enviada en la invitación.
+     * Solo tiene valor hasta que el estudiante inicia sesión por primera vez.
+     */
+    @Column(name = "temp_password")
+    private String tempPassword;
+
     /** Teléfono de contacto (completado en el onboarding). */
     private String phone;
 
