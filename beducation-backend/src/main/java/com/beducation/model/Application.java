@@ -144,6 +144,9 @@ public class Application {
         // ── Etapa 3: Oferta formal realizada
         OFFERED,
 
+        // ── Estudiante acepta la oferta, pendiente de Admin
+        STUDENT_ACCEPTED,
+
         // ── Etapa 4: Admin ha pre-aprobado el placement
         ADMIN_APPROVED,
 

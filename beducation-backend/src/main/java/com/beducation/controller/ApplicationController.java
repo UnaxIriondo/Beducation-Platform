@@ -56,7 +56,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
+    @PreAuthorize("hasAuthority('SCOPE_STUDENT') or hasAuthority('SCOPE_SCHOOL') or hasAuthority('SCOPE_ADMIN')")
     @Operation(summary = "Trackeo en Dashboard de estado procesado que ve cada Estudiante de todas las aplicadas.")
     public ResponseEntity<Page<Application>> studentTrack(
         @PathVariable Long studentId, Pageable pageable) {

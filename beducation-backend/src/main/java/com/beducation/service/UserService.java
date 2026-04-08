@@ -53,8 +53,15 @@ public class UserService {
         log.info("Usuario {} ({}) cambiado a estado {}", user.getId(), user.getEmail(), status);
         return userRepository.save(user);
     }
-    // En UserService.java — añade este método
-public boolean existsByEmail(String email) {
-    return userRepository.existsByEmail(email);
-}
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    /**
+     * Elimina un usuario permanentemente por su ID de base.
+     */
+    public void deleteUser(Long userId) {
+        log.warn("Eliminando usuario permanentemente del sistema: ID {}", userId);
+        userRepository.deleteById(userId);
+    }
 }

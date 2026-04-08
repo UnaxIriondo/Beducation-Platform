@@ -178,6 +178,40 @@ public class CompanyService {
     // Funciones Auxiliares
     // ──────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getDashboardStats(Long companyId) {
+        if (!companyRepository.existsById(companyId)) {
+            throw new RuntimeException("Empresa no existente.");
+        }
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        
+        // Cargar todas las oportunidades de la empresa
+        List<Opportunity> companyOpps = opportunityRepository.findByCompanyId(companyId);
+        
+        // Calcular Funnel de Aplicaciones Global
+        java.util.Map<String, Long> funnel = new java.util.HashMap<>();
+        for (Application.ApplicationStatus status : Application.ApplicationStatus.values()) {
+            funnel.put(status.name(), 0L);
+        }
+
+        long totalApps = 0;
+        for (Opportunity opp : companyOpps) {
+            for (Application app : opp.getApplications()) {
+                String statusName = app.getStatus().name();
+                funnel.put(statusName, funnel.get(statusName) + 1);
+                totalApps++;
+            }
+        }
+
+        stats.put("funnel", funnel);
+        stats.put("totalApplications", totalApps);
+        stats.put("activeVacancies", companyOpps.stream()
+            .filter(o -> o.getStatus() == Opportunity.OpportunityStatus.APPROVED).count());
+        
+        return stats;
+    }
+
     private Company checkCompanyActiveStatus(Long companyId) {
         Company company = companyRepository.findById(companyId)
             .orElseThrow(() -> new RuntimeException("Empresa solicitada no existente."));

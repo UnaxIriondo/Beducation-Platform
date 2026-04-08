@@ -98,4 +98,11 @@ public class CompanyController {
         @PathVariable Long companyId, Pageable pageable) {
         return ResponseEntity.ok(companyService.getCompanyOpportunities(companyId, pageable));
     }
+
+    @GetMapping("/{companyId}/stats")
+    @PreAuthorize("hasAuthority('SCOPE_COMPANY')")
+    @Operation(summary = "Resumen de Pipeline/Funnel para la Empresa", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<java.util.Map<String, Object>> getStats(@PathVariable Long companyId) {
+        return ResponseEntity.ok(companyService.getDashboardStats(companyId));
+    }
 }

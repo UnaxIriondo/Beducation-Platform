@@ -28,6 +28,9 @@ public interface OpportunityRepository extends JpaRepository<Opportunity, Long> 
      */
     Page<Opportunity> findByCompanyId(Long companyId, Pageable pageable);
 
+    /** Lista todas las ofertas de una empresa para cálculos de agregación */
+    List<Opportunity> findByCompanyId(Long companyId);
+
     /**
      * Lista ofertas aprobadas con filtros opcionales.
      * Usado en el portal de estudiante para buscar oportunidades.

@@ -21,6 +21,9 @@
           
           <template v-else-if="!authStore.isAuthenticated">
             <div class="flex gap-2">
+              <button @click="mockLogin('ADMIN')" class="text-xs bg-rose-100 text-rose-700 font-bold px-2 py-1 rounded hover:bg-rose-200 transition-colors">
+                Test Admin
+              </button>
               <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded hover:bg-indigo-200 transition-colors">
                 Test Escuela
               </button>
@@ -36,7 +39,12 @@
           <template v-else>
             <!-- Dropdown o Menú rápido de Auth0 mockeado -->
             <div class="flex items-center gap-4">
-              <span class="text-sm text-slate-500 hidden sm:block">Bienvenid@, <b>{{ authStore.user?.name || 'Invitado' }}</b></span>
+              <span class="text-sm text-slate-500 hidden sm:block">
+                Bienvenid@, <b>{{ authStore.user?.name || 'Usuario' }}</b>
+                <span class="ml-1 px-1.5 py-0.5 bg-slate-100 text-[10px] rounded border border-slate-200 font-bold uppercase tracking-wider text-slate-400">
+                  {{ authStore.role }}
+                </span>
+              </span>
               <div class="w-10 h-10 rounded-full border-2 border-primary-200 bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
                 {{ authStore.user?.name ? authStore.user.name.charAt(0) : 'U' }}
               </div>

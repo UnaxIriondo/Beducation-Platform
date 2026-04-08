@@ -52,6 +52,7 @@ com\beducation\config\AudienceValidator.class
 com\beducation\config\SecurityConfig.class
 com\beducation\exception\GlobalExceptionHandler$ErrorResponse.class
 com\beducation\model\Opportunity$OpportunityStatus.class
+com\beducation\controller\EducationTypeController.class
 com\beducation\dto\StudentProfileDto.class
 com\beducation\repository\SchoolRepository.class
 com\beducation\model\StudentDocument.class

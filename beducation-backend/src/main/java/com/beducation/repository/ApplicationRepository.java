@@ -36,6 +36,11 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     Page<Application> findByStudentId(Long studentId, Pageable pageable);
 
     /**
+     * Obtiene solicitudes filtradas por su estado.
+     */
+    Page<Application> findByStatus(ApplicationStatus status, Pageable pageable);
+
+    /**
      * Obtiene todas las solicitudes para una oferta concreta.
      * Usado por la empresa para revisar candidatos.
      */

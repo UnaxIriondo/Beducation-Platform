@@ -68,15 +68,13 @@ export const useAuthStore = defineStore('auth', {
                 else if (this.role === 'ADMIN') endpoint = `/admin/me`;
 
                 // Si tenemos ya la ruta me o equivalente
-                // Como no tenemos el alias "/me" en los endpoints, temporalmente 
-                // podríamos abstraerlo via auth0Id en un nuevo Controller `UserController` si fuera necesario.
-                // Simularemos una query o usar data almacenada del login success
                 if (endpoint) {
+                    console.log(`API CALL: GET ${endpoint}`);
                     const response = await api.get(endpoint);
-                    // El interceptor de axios ya devuelve response.data directamente
                     this.user = response;
                 }
             } catch (e) {
+                console.error(`Error fetching profile for ${this.role}:`, e);
                 console.warn('Usuario registrado en Auth0 pero no se halló perfil completado en Backend (registro por terminar o invitado recién entrado).');
             }
         },
@@ -153,6 +151,10 @@ export const useAuthStore = defineStore('auth', {
                     await this.loginByEmail('unax.iriondo.51345@ikasle.egibide.org');
                 } else if (role === 'SCHOOL') {
                     await this.loginByEmail('director@ikasle.egibide.org');
+                } else if (role === 'COMPANY') {
+                    await this.loginByEmail('hr.manager@company.com');
+                } else if (role === 'ADMIN') {
+                    await this.loginByEmail('admin@beducation.com');
                 } else {
                     // Fallback para otros si no están migrados
                     this.isAuthenticated = true;

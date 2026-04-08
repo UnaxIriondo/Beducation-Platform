@@ -76,7 +76,13 @@ public class MatchingEngine {
 
         // Calcular el score para cada oferta y filtrar por umbral mínimo
         return availableOpportunities.stream()
-            .map(opportunity -> new MatchResult(opportunity, calculateScore(student, opportunity)))
+            .map(opportunity -> {
+                List<String> commonKeywords = student.getKeywords().stream()
+                    .filter(sk -> opportunity.getKeywords().stream().anyMatch(ok -> ok.getId().equals(sk.getId())))
+                    .map(Keyword::getName)
+                    .collect(Collectors.toList());
+                return new MatchResult(opportunity, calculateScore(student, opportunity), commonKeywords);
+            })
             .filter(result -> result.score() >= MIN_SCORE_THRESHOLD)
             .sorted(Comparator.comparingDouble(MatchResult::score).reversed())
             .limit(maxResults)
@@ -191,6 +197,7 @@ public class MatchingEngine {
      *
      * @param opportunity la oferta evaluada
      * @param score       puntuación de 0.0 a 1.0
+     * @param matchedKeywords lista de keywords en común
      */
-    public record MatchResult(Opportunity opportunity, double score) {}
+    public record MatchResult(Opportunity opportunity, double score, List<String> matchedKeywords) {}
 }

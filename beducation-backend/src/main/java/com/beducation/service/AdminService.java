@@ -38,8 +38,10 @@ public class AdminService {
     private final KeywordCategoryRepository keywordCategoryRepository;
     private final KeywordRepository keywordRepository;
     private final EducationTypeRepository educationTypeRepository;
+    private final StudentRepository studentRepository;
     private final UserService userService;
     private final EmailService emailService;
+    private final SchoolService schoolService;
 
     // ──────────────────────────────────────────────
     // APROBACIONES DE ENTIDADES (Escuelas y Empresas)
@@ -179,5 +181,88 @@ public class AdminService {
     @Transactional(readOnly = true)
     public Page<Opportunity> getPendingOpportunities(Pageable pageable) {
         return opportunityRepository.findByStatus(Opportunity.OpportunityStatus.PENDING_REVIEW, pageable);
+    }
+
+    /** Obtener aplicaciones que requieren validación de Admin (Stage 4) */
+    @Transactional(readOnly = true)
+    public Page<Application> getPendingPlacements(Pageable pageable) {
+        return applicationRepository.findByStatus(ApplicationStatus.STUDENT_ACCEPTED, pageable);
+    }
+
+    /**
+     * Resumen estadístico del sistema para el Dashboard de Admin.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getDashboardStats() {
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        
+        // Contadores Globales de Activos
+        stats.put("totalSchools", schoolRepository.countByStatus(School.ApprovalStatus.APPROVED));
+        stats.put("totalCompanies", companyRepository.countByStatus(School.ApprovalStatus.APPROVED));
+        stats.put("totalOpportunities", opportunityRepository.countByStatus(Opportunity.OpportunityStatus.APPROVED));
+        stats.put("totalApplications", applicationRepository.count());
+        stats.put("totalStudents", studentRepository.count());
+        
+        // Funnel de Aplicaciones
+        java.util.Map<String, Long> funnel = new java.util.HashMap<>();
+        for (Application.ApplicationStatus status : Application.ApplicationStatus.values()) {
+            funnel.put(status.name(), applicationRepository.countByStatus(status));
+        }
+        stats.put("funnel", funnel);
+        
+        // Badges (Notificaciones Pendientes de Acción por el Admin)
+        stats.put("pendingSchoolsCount", schoolRepository.countByStatus(School.ApprovalStatus.PENDING));
+        stats.put("pendingCompaniesCount", companyRepository.countByStatus(School.ApprovalStatus.PENDING));
+        stats.put("pendingOpportunitiesCount", opportunityRepository.countByStatus(Opportunity.OpportunityStatus.PENDING_REVIEW));
+        
+        // Etapa 4: El Administrador debe validar el acuerdo antes de mandarlo a la Escuela
+        stats.put("pendingStage4Count", applicationRepository.countByStatus(ApplicationStatus.STUDENT_ACCEPTED));
+
+        return stats;
+    }
+
+    // ──────────────────────────────────────────────
+    // LISTADOS TOTALES PARA EL ADMIN
+    // ──────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Page<School> getAllSchools(Pageable pageable) {
+        return schoolRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Company> getAllCompanies(Pageable pageable) {
+        return companyRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Student> getAllStudents(Pageable pageable) {
+        return studentRepository.findAll(pageable);
+    }
+
+    /**
+     * Cambiar estado de activación de cualquier usuario.
+     */
+    public User changeUserStatus(Long userId, User.UserStatus status) {
+        return userService.changeUserStatus(userId, status);
+    }
+
+    /**
+     * Eliminar un usuario y sus registros asociados.
+     */
+    public void deleteUser(Long userId) {
+        schoolRepository.findByUserId(userId).ifPresent(schoolRepository::delete);
+        companyRepository.findByUserId(userId).ifPresent(companyRepository::delete);
+        studentRepository.findByUserId(userId).ifPresent(studentRepository::delete);
+        
+        userService.deleteUser(userId);
+        log.info("Usuario con ID {} y sus datos asociados eliminados por el Administrador.", userId);
+    }
+
+    /**
+     * El Admin invita directamente a un alumno, asociándolo a una escuela.
+     */
+    public Student inviteStudent(Long schoolId, String first, String last, String email) {
+        return schoolService.inviteStudent(schoolId, first, last, email);
     }
 }

@@ -86,6 +86,12 @@ const routes = [
         component: () => import('../views/company/CompanyDashboardView.vue'),
         meta: { requiresAuth: true, role: 'COMPANY' }
     },
+    {
+        path: '/company/opportunities/:id/candidates',
+        name: 'CompanyOpportunityCandidates',
+        component: () => import('../views/company/OpportunityCandidatesView.vue'),
+        meta: { requiresAuth: true, role: 'COMPANY' }
+    },
     // Portal Admin
     {
         path: '/admin/dashboard',

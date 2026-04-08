@@ -57,9 +57,14 @@
                 <!-- Placeholder Empresa -->
                 <p class="text-sm text-slate-500 mt-1">Empresa Tech SL</p>
                 <div class="mt-4 flex gap-1 flex-wrap">
-                     <!-- Etiquetas random -->
-                     <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Java</span>
-                     <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Inglés</span>
+                     <!-- Etiquetas Reales del Match -->
+                     <span v-for="kw in match.matchedKeywords" :key="kw" 
+                           class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-100">
+                        {{ kw }}
+                     </span>
+                     <span v-if="match.matchedKeywords.length === 0" class="text-[10px] text-slate-400 italic">
+                        Match por ubicación/estudios
+                     </span>
                 </div>
             </div>
         </div>
@@ -69,71 +74,116 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Estadísticas de Solicitudes (Fila 2) -->
       <div class="lg:col-span-2 glass-card rounded-2xl p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Estado de mis candidaturas (Funnel)</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Mis Procesos de Selección</h3>
         
-        <!-- Falsa tabla/estado -->
-        <div v-if="loadingApps" class="animate-pulse bg-slate-100 h-20 rounded-xl mb-3"></div>
+        <div v-if="loadingApps" class="animate-pulse space-y-4">
+            <div v-for="i in 2" :key="i" class="bg-slate-100 h-24 rounded-xl"></div>
+        </div>
         <div v-else-if="applications.length === 0" class="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
             <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
             <p class="text-slate-500 font-medium">No has postulado a ninguna oferta todavía.</p>
             <button @click="$router.push('/student/search')" class="mt-4 text-primary-600 hover:text-primary-700 font-medium underline underline-offset-4">Explorar catálogo</button>
         </div>
-        <div v-else class="space-y-4">
+        <div v-else class="space-y-6">
             <!-- Iterate over applications -->
-            <div v-for="app in applications" :key="app.id" class="border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white hover:border-slate-300 transition-colors">
-                <div>
-                    <h4 class="font-bold text-slate-800">{{ app.opportunity.title }}</h4>
-                    <p class="text-sm text-slate-500">{{ app.opportunity.country }} · Aplicado: {{ new Date(app.createdAt).toLocaleDateString() }}</p>
-                </div>
-                <!-- Status Badge -->
-                <div class="shrink-0 flex items-center gap-2 flex-wrap">
-                    <span :class="getStatusClasses(app.status)" class="px-3 py-1 text-[10px] font-bold rounded-full border">
-                        {{ app.status }}
-                    </span>
-                    <!-- Action Buttons basadas en workflow -->
-                    <div v-if="app.status === 'OFFERED'" class="flex gap-2">
-                        <button @click="rejectOffer(app.id)" class="px-3 py-1 font-bold text-[10px] rounded text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors uppercase">
-                            Rechazar
-                        </button>
-                        <button @click="acceptOffer(app.id)" class="bg-emerald-500 text-white shadow-sm hover:shadow-emerald-200 px-3 py-1 font-bold text-[10px] rounded transition-all uppercase">
-                            Aceptar
+            <div v-for="app in applications" :key="app.id" class="border border-slate-200 rounded-2xl p-5 bg-white hover:border-sky-200 hover:shadow-lg hover:shadow-sky-900/5 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-lg text-slate-800">{{ app.opportunity.title }}</h4>
+                            <span :class="getStatusClasses(app.status)" class="px-2 py-0.5 text-[9px] font-black rounded-md uppercase tracking-wider">
+                                {{ app.status }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">{{ app.opportunity.country }} · Aplicado: {{ new Date(app.createdAt).toLocaleDateString() }}</p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <template v-if="app.status === 'OFFERED'">
+                            <button @click="rejectOffer(app.id)" class="px-3 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50">Rechazar</button>
+                            <button @click="acceptOffer(app.id)" class="px-4 py-2 text-xs font-bold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 shadow-md shadow-emerald-200">Aceptar Oferta</button>
+                        </template>
+                        <button v-if="['APPLIED', 'INTERESTED'].includes(app.status)" 
+                                @click="withdrawApplication(app.id)" 
+                                class="px-3 py-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors uppercase">
+                            Retirar
                         </button>
                     </div>
-                    <button v-if="['APPLIED', 'INTERESTED', 'INTERVIEW_SCHEDULED'].includes(app.status)" 
-                            @click="withdrawApplication(app.id)" 
-                            class="px-3 py-1 text-slate-400 hover:text-rose-500 font-bold text-[10px] transition-colors uppercase">
-                        Retirar
-                    </button>
+                </div>
+
+                <!-- Visual Timeline -->
+                <div class="relative pt-2 pb-6 px-2">
+                    <div class="absolute top-5 left-8 right-8 h-0.5 bg-slate-100"></div>
+                    <div class="relative z-10 flex justify-between">
+                        <div v-for="s in [1,2,3,4,5]" :key="s" class="flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-500"
+                                 :class="app.stage >= s ? 'bg-sky-600 text-white ring-4 ring-sky-50' : 'bg-slate-200 text-slate-400'">
+                                <svg v-if="app.stage > s" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                <span v-else>{{ s }}</span>
+                            </div>
+                            <span class="text-[9px] mt-2 font-bold uppercase tracking-tighter" :class="app.stage >= s ? 'text-sky-700' : 'text-slate-400'">
+                                {{ ['Applied','Int','Offer','Val','Conf'][s-1] }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entrevista Alert inside Card if exists -->
+                <div v-if="app.interview" class="mt-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center gap-3">
+                    <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-indigo-900">Entrevista Programada: {{ new Date(app.interview.scheduledAt).toLocaleString() }}</p>
+                        <a :href="app.interview.videoCallLink" target="_blank" class="text-[10px] text-indigo-600 font-bold underline">Unirse a la llamada</a>
+                    </div>
                 </div>
             </div>
         </div>
       </div>
 
       <!-- Tareas Pendientes o Sidebar Info -->
-      <div class="glass-card rounded-2xl p-6 bg-slate-800 text-white shadow-xl shadow-slate-900/10">
-        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-           Avisos del Sistema
-        </h3>
-        <ul class="space-y-4 relative">
-          <!-- Line background -->
-          <div class="absolute left-1.5 top-2 bottom-2 w-0.5 bg-slate-700"></div>
+      <div class="glass-card rounded-2xl p-0 overflow-hidden bg-slate-800 text-white shadow-xl shadow-slate-900/10 border-0 flex flex-col">
+        <div class="p-6 bg-slate-700/50">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <span class="w-2 h-2 bg-sky-400 rounded-full animate-ping"></span>
+                Avisos Críticos
+            </h3>
+        </div>
+        <div class="p-6 flex-1">
+            <ul class="space-y-6 relative">
+              <!-- Line background -->
+              <div class="absolute left-1.5 top-2 bottom-2 w-px bg-slate-700"></div>
 
-          <li class="relative pl-6">
-            <span class="absolute left-0 top-1.5 w-3 h-3 bg-red-500 rounded-full ring-4 ring-slate-800"></span>
-            <p class="text-sm font-medium">Sube tu CV Europass</p>
-            <p class="text-xs text-slate-400 mt-1">Obligatorio para que los managers estudien tu caso.</p>
-          </li>
-          <li class="relative pl-6">
-            <span class="absolute left-0 top-1.5 w-3 h-3 bg-emerald-500 rounded-full ring-4 ring-slate-800"></span>
-            <p class="text-sm font-medium">Completar 5 variables Onboarding</p>
-            <p class="text-xs text-slate-400 mt-1">Realizado con éxito. Ya puedes aplicar.</p>
-          </li>
-           <li class="relative pl-6">
-            <span class="absolute left-0 top-1.5 w-3 h-3 bg-amber-500 rounded-full ring-4 ring-slate-800"></span>
-            <p class="text-sm font-medium">Entrevista de Prueba SL</p>
-            <p class="text-xs text-slate-400 mt-1">Hoy a las 16:00 h vía Zoom (Stage 2).</p>
-          </li>
-        </ul>
+              <li v-if="profileProgress < 100" class="relative pl-6">
+                <span class="absolute left-0 top-1.5 w-3 h-3 bg-amber-500 rounded-full ring-4 ring-slate-800"></span>
+                <p class="text-sm font-bold">Perfil Incompleto</p>
+                <p class="text-[10px] text-slate-400 mt-1">Tu perfil está al {{ Math.round(profileProgress) }}%. Alguna ofertas requieren el 100% para postular.</p>
+                <button @click="$router.push('/student/onboarding')" class="mt-2 text-[10px] bg-slate-700 px-2 py-1 rounded hover:bg-slate-600 transition-colors">Completar ahora</button>
+              </li>
+
+              <li v-if="applications.some(a => a.status === 'OFFERED')" class="relative pl-6">
+                <span class="absolute left-0 top-1.5 w-3 h-3 bg-emerald-500 rounded-full ring-4 ring-slate-800"></span>
+                <p class="text-sm font-bold">Oferta Pendiente</p>
+                <p class="text-[10px] text-slate-400 mt-1">¡Enhorabuena! Has recibido una oferta formal. Revísala pronto.</p>
+              </li>
+
+              <li v-if="applications.some(a => a.interview)" class="relative pl-6">
+                <span class="absolute left-0 top-1.5 w-3 h-3 bg-sky-500 rounded-full ring-4 ring-slate-800"></span>
+                <p class="text-sm font-bold">Cita de Entrevista</p>
+                <p class="text-[10px] text-slate-400 mt-1">Tienes una entrevista programada. Revisa los detalles en tu pipeline.</p>
+              </li>
+
+              <li v-if="profileProgress >= 80" class="relative pl-6">
+                <span class="absolute left-0 top-1.5 w-3 h-3 bg-slate-500 rounded-full ring-4 ring-slate-800"></span>
+                <p class="text-sm font-bold">T-Matching Activado</p>
+                <p class="text-[10px] text-slate-400 mt-1">Estamos analizando ofertas compatibles con tu perfil.</p>
+              </li>
+            </ul>
+        </div>
+        <div class="p-6 bg-slate-900/50 mt-auto">
+            <p class="text-[10px] text-slate-500 font-medium">Beducation Platform v2.1.0-dev</p>
+        </div>
       </div>
     </div>
   </div>

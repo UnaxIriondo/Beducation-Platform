@@ -67,6 +67,12 @@ public class User {
     private String email;
 
     /**
+     * Nombre completo del usuario (opcional).
+     */
+    @Column(name = "full_name")
+    private String fullName;
+
+    /**
      * Rol del usuario en la plataforma.
      * Determina qué portal y qué endpoints puede usar.
      */
