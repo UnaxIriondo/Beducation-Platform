@@ -64,13 +64,16 @@
                  
                   <div>
                     <label class="block mb-2 text-sm font-medium text-slate-700">Competencias y Tecnologías (Keywords)</label>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
-                        <label v-for="kw in allKeywords" :key="kw.id" class="flex items-center gap-2 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
-                            <input type="checkbox" :value="kw.id" v-model="form.keywordIds" class="rounded text-sky-600 focus:ring-sky-500" />
-                            <span class="text-xs text-slate-600 font-medium">{{ kw.name }}</span>
+                    <div class="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 min-h-[100px] max-h-60 overflow-y-auto">
+                        <label v-for="kw in allKeywords" :key="kw.id" 
+                               class="relative flex items-center group cursor-pointer">
+                            <input type="checkbox" :value="kw.id" v-model="form.keywordIds" class="sr-only peer" />
+                            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest transition-all peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 peer-checked:shadow-md peer-checked:shadow-slate-900/10 group-hover:border-slate-400">
+                                {{ kw.name }}
+                            </span>
                         </label>
                     </div>
-                    <p class="text-xs text-slate-500 mt-2">Selecciona las tecnologías o habilidades que dominas. Esto es clave para el MatchMaker (70% del peso).</p>
+                    <p class="text-[10px] text-slate-400 mt-2 font-medium">Selecciona las tecnologías o habilidades que dominas. Esto es clave para el MatchMaker inteligente (70% del peso).</p>
                  </div>
 
                  <div>

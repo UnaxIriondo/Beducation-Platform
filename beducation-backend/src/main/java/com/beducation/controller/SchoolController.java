@@ -112,4 +112,15 @@ public class SchoolController {
     public ResponseEntity<java.util.Map<String, Object>> getStats(@PathVariable Long schoolId) {
         return ResponseEntity.ok(schoolService.getDashboardStats(schoolId));
     }
+
+    @PostMapping("/{schoolId}/import-students")
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
+    @Operation(summary = "Importación masiva de alumnos vía CSV", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<Student>> importStudents(
+            @PathVariable Long schoolId,
+            @RequestParam("file") MultipartFile file) {
+        // Aprovechamos la lógica de AdminService pero restringida a la escuela actual
+        // En una refactorización ideal, esta lógica estaría en SchoolService
+        return ResponseEntity.ok(schoolService.getAdminService().importStudentsByCsv(schoolId, file));
+    }
 }

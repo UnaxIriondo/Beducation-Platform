@@ -44,7 +44,7 @@
 
       <!-- ANALYTICS FUNNEL VIEW -->
       <div v-show="currentTab === 'analiticas'" class="p-6">
-        <h3 class="text-xl font-bold text-slate-800 mb-6">Pipeline Global de Selección</h3>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Pipeline Global</h3>
         
         <div class="max-w-4xl mx-auto space-y-4">
             <!-- Funnel Stages -->
@@ -83,7 +83,7 @@
 
       <!-- Panel VERIFICAR (Combinado) -->
       <div v-show="currentTab === 'escuelas'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Nuevas Solicitudes de Registro (Stage 1)</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Solicitudes de registro</h3>
         
         <!-- Escuelas Pendientes -->
         <div v-if="pendingSchools.length > 0" class="mb-8">
@@ -137,7 +137,7 @@
       <!-- GESTIÓN GLOBAL: ESTUDIANTES -->
       <div v-show="currentTab === 'control_estudiantes'" class="p-6">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-slate-800">Base de Datos de Estudiantes</h3>
+            <h3 class="text-lg font-bold text-slate-800">Estudiantes</h3>
             <button @click="showInviteForm = !showInviteForm" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                 Invitar Alumno (Admin)
@@ -279,7 +279,7 @@
 
       <!-- GESTIÓN GLOBAL: ESCUELAS -->
       <div v-show="currentTab === 'control_escuelas'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Base de Datos de Instituciones</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Instituciones</h3>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-slate-800 uppercase text-xs border-b">
@@ -307,7 +307,7 @@
 
       <!-- GESTIÓN GLOBAL: EMPRESAS -->
       <div v-show="currentTab === 'control_empresas'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Base de Datos de Empresas</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Empresas</h3>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-slate-800 uppercase text-xs border-b">
@@ -375,7 +375,7 @@
 
       <!-- PANEL PLACEMENTS (Stage 4) -->
       <div v-show="currentTab === 'placements'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Acuerdos Pendientes de Validación Admin (Stage 4)</h3>
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Acuerdos Pendientes de Validación por el Admin</h3>
         
         <div v-if="pendingPlacements.length > 0" class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-sm text-left text-slate-600">
@@ -442,7 +442,7 @@ const tabs = ref([
     { id: 'control_escuelas', label: 'Gestión Escuelas', badge: 0 },
     { id: 'control_empresas', label: 'Gestión Empresas', badge: 0 },
     { id: 'gallery_requests', label: 'Accesos Galería', badge: 0 },
-    { id: 'placements', label: 'Convenios Stage 4', badge: 0 }
+    { id: 'placements', label: 'Validaciones Finales', badge: 0 }
 ]);
 
 const stats = ref({ activeSchools: 0, activeStudents: 0 });
@@ -546,7 +546,13 @@ const submitInvitation = async () => {
 };
 
 // CSV HANDLERS
-const triggerFileInput = () => fileInput.value.click();
+const triggerFileInput = () => {
+    if (!csvTargetSchoolId.value) {
+        alert("Por favor, selecciona primero la escuela destino antes de subir el archivo.");
+        return;
+    }
+    fileInput.value.click();
+};
 
 const onFileChange = (e) => {
     const file = e.target.files[0];
@@ -555,6 +561,10 @@ const onFileChange = (e) => {
 
 const handleDrop = (e) => {
     isDragging.value = false;
+    if (!csvTargetSchoolId.value) {
+        alert("Por favor, selecciona primero la escuela destino antes de subir el archivo.");
+        return;
+    }
     const file = e.dataTransfer.files[0];
     if (file) processCsvFile(file);
 };

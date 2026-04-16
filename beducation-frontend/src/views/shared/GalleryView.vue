@@ -6,14 +6,20 @@
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Galería de Eventos</h1>
         <p class="text-slate-500 mt-1">Explora los momentos más memorables de nuestros encuentros internacionales.</p>
       </div>
-      <div v-if="authStore.role === 'ADMIN'" class="flex gap-2">
-         <button @click="showUploadModal = true" class="btn-primary flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Subir Fotos
+      <div class="flex flex-wrap gap-2">
+         <button @click="goBackToDashboard" class="btn-secondary flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Volver a mi Panel
          </button>
-         <button @click="activeTab = activeTab === 'gallery' ? 'requests' : 'gallery'" class="btn-secondary">
-            {{ activeTab === 'gallery' ? 'Gestionar Accesos' : 'Ver Galería' }}
-         </button>
+         <template v-if="authStore.role === 'ADMIN'">
+             <button @click="showUploadModal = true" class="btn-primary flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Subir Fotos
+             </button>
+             <button @click="activeTab = activeTab === 'gallery' ? 'requests' : 'gallery'" class="btn-secondary">
+                {{ activeTab === 'gallery' ? 'Gestionar Accesos' : 'Ver Galería' }}
+             </button>
+         </template>
       </div>
     </div>
 
@@ -206,9 +212,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const activeTab = ref('gallery');
 const hasAccess = ref(false);
@@ -362,6 +370,15 @@ const getPhotoUrl = (s3Key) => {
         return `https://picsum.photos/seed/${cleanSeed}/800/800`;
     }
     return `https://beducation-files.s3.eu-west-1.amazonaws.com/${s3Key}`;
+};
+
+const goBackToDashboard = () => {
+    const role = authStore.role;
+    if (role === 'STUDENT') router.push('/student/dashboard');
+    else if (role === 'SCHOOL') router.push('/school/dashboard');
+    else if (role === 'COMPANY') router.push('/company/dashboard');
+    else if (role === 'ADMIN') router.push('/admin/dashboard');
+    else router.push('/');
 };
 </script>
 

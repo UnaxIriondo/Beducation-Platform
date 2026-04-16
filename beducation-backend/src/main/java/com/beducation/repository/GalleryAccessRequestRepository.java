@@ -38,4 +38,9 @@ public interface GalleryAccessRequestRepository extends JpaRepository<GalleryAcc
      * Verifica si un usuario ya tiene una solicitud aprobada.
      */
     boolean existsByUserIdAndStatus(Long userId, AccessStatus status);
+
+    /**
+     * Obtiene todas las solicitudes de un usuario.
+     */
+    java.util.List<GalleryAccessRequest> findByUserId(Long userId);
 }

@@ -10,13 +10,14 @@
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             Fotos Eventos
         </button>
-        <router-link to="/school/profile/edit" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium text-sm rounded-lg transition-colors flex items-center gap-2 border border-slate-200">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-          Editar Perfil
-        </router-link>
+        <button @click="$refs.csvInput.click()" class="px-4 py-2 text-slate-500 hover:text-slate-800 font-medium text-sm transition-colors flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Importar CSV
+        </button>
+        <input type="file" ref="csvInput" class="hidden" accept=".csv" @change="handleCsvUpload" />
         <button @click="openInviteModal" class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-          + Nuevo Alumno (1 a 1)
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Registrar Alumno
         </button>
       </div>
     </div>
@@ -86,7 +87,10 @@
         <div class="p-6 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <h3 class="text-lg font-bold text-slate-800">Directorio de Alumnos</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div v-if="students.length === 0" class="p-12 text-center">
+            <p class="text-slate-400 italic text-sm">No hay alumnos registrados en su institución.</p>
+        </div>
+        <div v-else class="overflow-x-auto text-left">
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-slate-800 uppercase text-[10px] sm:text-xs">
                     <tr>
@@ -313,6 +317,9 @@
                 </div>
 
                 <div class="flex items-center gap-2 justify-end">
+                  <button @click="previewAgreement(app)" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors">
+                    Ver Detalles
+                  </button>
                   <button @click="confirmAction(app, 'REJECT')" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-lg transition-colors">
                     Rechazar
                   </button>
@@ -354,6 +361,60 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Previsualización de Acuerdo -->
+    <div v-if="showPreview" class="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-300">
+            <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-black text-slate-800 tracking-tight uppercase">Learning Agreement</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Beducation International Placement</p>
+                </div>
+                <button @click="showPreview = false" class="p-2 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-100">
+                    <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-8 space-y-8">
+                <!-- Secciones del contrato simuladas -->
+                <div class="grid grid-cols-2 gap-8 text-left">
+                    <div>
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Alumno Participante</label>
+                        <p class="text-sm font-bold text-slate-800">{{ selectedAppForPreview?.student?.firstName }} {{ selectedAppForPreview?.student?.lastName }}</p>
+                        <p class="text-xs text-slate-500">{{ selectedAppForPreview?.student?.invitationEmail }}</p>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Empresa de Acogida</label>
+                        <p class="text-sm font-bold text-slate-800">{{ selectedAppForPreview?.opportunity?.company?.name }}</p>
+                        <p class="text-xs text-slate-500">{{ selectedAppForPreview?.opportunity?.city }}, {{ selectedAppForPreview?.opportunity?.country }}</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-left">
+                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3">Detalles de las Prácticas</label>
+                    <div class="space-y-3">
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-xs text-slate-500">Puesto:</span>
+                            <span class="text-xs font-bold text-slate-800">{{ selectedAppForPreview?.opportunity?.title }}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-xs text-slate-500">Periodo:</span>
+                            <span class="text-xs font-bold text-slate-800">{{ formatDate(selectedAppForPreview?.opportunity?.startDate) }} - {{ formatDate(selectedAppForPreview?.opportunity?.endDate) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-slate-500">Estado Validación:</span>
+                            <span class="text-[9px] font-black px-2 py-0.5 bg-amber-100 text-amber-700 rounded uppercase">Pendiente Firma Centro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button @click="showPreview = false" class="btn-secondary flex-1">Cerrar</button>
+                    <button @click="confirmAction(selectedAppForPreview, 'APPROVE'); showPreview = false" class="btn-primary flex-1">Aprobar Ahora</button>
+                </div>
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -374,12 +435,18 @@ const newStudent = ref({
     educationType: ''
 });
 
+// CSV Upload
+const csvInput = ref(null);
+const isUploadingCsv = ref(false);
+
 // Modal Funnel
 const showFunnelModal = ref(false);
 const selectedStudent = ref(null);
 
-// Modales Validation
+// Modales Validation & Preview
 const showValidationModal = ref(false);
+const showPreview = ref(false);
+const selectedAppForPreview = ref(null);
 const actionConfirm = ref({ show: false, student: null, type: '', reason: '' });
 const isProcessingAction = ref(false);
 
@@ -486,6 +553,29 @@ const submitInvite = async () => {
     }
 };
 
+const handleCsvUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !schoolId.value) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    isUploadingCsv.value = true;
+    try {
+        await api.post(`/schools/${schoolId.value}/import-students`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        alert('Importación completada con éxito.');
+        await fetchStudents();
+        await fetchStats();
+    } catch (e) {
+        alert("Error en la importación: " + (e.response?.data?.message || e.message));
+    } finally {
+        isUploadingCsv.value = false;
+        event.target.value = ''; // Reset input
+    }
+};
+
 const deleteStudent = async (studentId) => {
     if (!confirm('¿Estás seguro de que deseas eliminar a este alumno del directorio? Esta acción no se puede deshacer.')) return;
     if (!schoolId.value) return;
@@ -507,10 +597,15 @@ const openValidationModal = () => {
     showValidationModal.value = true;
 };
 
-const confirmAction = (student, type) => {
+const previewAgreement = (app) => {
+    selectedAppForPreview.value = app;
+    showPreview.value = true;
+};
+
+const confirmAction = (app, type) => {
     actionConfirm.value = {
         show: true,
-        student,
+        app,
         type,
         reason: ''
     };
@@ -521,7 +616,7 @@ const executeAction = async () => {
     isProcessingAction.value = true;
     try {
         const type = actionConfirm.value.type.toLowerCase(); // 'approve' or 'reject'
-        const endpoint = `/applications/${actionConfirm.value.student.id}/school-${type}`;
+        const endpoint = `/applications/${actionConfirm.value.app.id}/school-${type}`;
         
         await api.patch(endpoint, null, {
             params: {
