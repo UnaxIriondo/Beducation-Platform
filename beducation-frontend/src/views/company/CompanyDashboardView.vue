@@ -6,40 +6,40 @@
            <h1 class="text-2xl font-bold tracking-tight text-slate-800">Pipeline Comercial: Mis Ofertas Erasmus</h1>
            <p class="text-sm text-slate-500 mt-1">Gestione sus vacantes y seleccione el talento internacional para su empresa.</p>
         </div>
-        <button @click="openCreateModal" class="btn-primary flex items-center gap-2 bg-slate-900 hover:bg-slate-800 shadow-sm">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Crear Nueva Vacante (DRAFT)
-        </button>
+        <div class="flex items-center gap-3">
+            <button @click="$router.push('/gallery')" class="btn-secondary flex items-center gap-2 border-slate-200">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                Galería Eventos
+            </button>
+            <button @click="openCreateModal" class="btn-primary flex items-center gap-2 bg-slate-900 hover:bg-slate-800 shadow-sm">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Crear Nueva Vacante (DRAFT)
+            </button>
+        </div>
     </div>
 
-    <!-- Stats & Filters -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-         <div class="glass-card p-6 md:col-span-1 flex flex-col justify-center border-l-4 border-l-sky-500">
-             <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Candidatos Activos</span>
-             <span class="text-4xl font-black text-slate-800">{{ stats.totalApplications || totalCandidates }}</span>
-             <p class="text-[10px] text-slate-400 mt-2 font-medium">En todos los procesos</p>
+    <!-- Stats & Filters Simplificado -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 text-left">
+         <div class="section-card md:col-span-1 flex flex-col justify-center border-l-4 border-l-slate-200">
+             <span class="label-caps">Candidatos Activos</span>
+             <span class="text-4xl font-bold text-slate-900">{{ stats.totalApplications || totalCandidates }}</span>
+             <p class="text-[10px] text-slate-400 mt-2 font-medium">Procesos en curso</p>
          </div>
-         <div class="glass-card p-6 md:col-span-3">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pipeline Global de Selección</span>
-                <span class="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded font-bold uppercase">Real-time</span>
+         <div class="section-card md:col-span-3">
+            <div class="flex justify-between items-center mb-6">
+                <span class="label-caps">Pipeline de Selección</span>
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Distribución Global</span>
             </div>
             
-            <div class="flex items-end gap-1 h-20">
+            <div class="flex items-end gap-2 h-20 px-4">
                 <div v-for="(count, status) in stats.funnel" :key="status" 
                      class="flex-1 group relative flex flex-col items-center justify-end h-full">
-                    <!-- Tooltip -->
-                    <div class="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-20">
-                        {{ status }}: {{ count }}
-                    </div>
-                    <!-- Bar -->
-                    <div class="w-full rounded-t-lg transition-all duration-700 bg-sky-500/10 group-hover:bg-sky-500/20 relative overflow-hidden" 
+                    <span class="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mb-1">{{ count }}</span>
+                    <div class="w-full rounded-t bg-slate-100 group-hover:bg-slate-200 transition-colors" 
                          :style="{ height: (stats.totalApplications > 0 ? (count / stats.totalApplications * 100) : 0) + '%' }">
-                         <div class="absolute inset-0 bg-sky-500 opacity-40"></div>
                     </div>
-                    <!-- Label -->
-                    <span class="text-[8px] mt-2 font-bold text-slate-400 truncate w-full text-center uppercase tracking-tighter">
-                        {{ status.substring(0,6) }}..
+                    <span class="text-[8px] mt-2 font-bold text-slate-400 uppercase tracking-tighter truncate w-full text-center">
+                        {{ status.substring(0,8) }}
                     </span>
                 </div>
             </div>

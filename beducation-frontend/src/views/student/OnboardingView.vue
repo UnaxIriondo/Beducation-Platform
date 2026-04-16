@@ -56,10 +56,9 @@
                     <label class="block mb-2 text-sm font-medium text-slate-700">Tipo de Educación Actual</label>
                     <select v-model="form.educationTypeId" required class="input-field">
                         <option :value="null">Selecciona una opción...</option>
-                        <option value="1">Formación Profesional Básica</option>
-                        <option value="2">Ciclo Formativo Grado Medio</option>
-                        <option value="3">Ciclo Formativo Grado Superior (CFGS)</option>
-                        <option value="4">Grado Universitario</option>
+                        <option v-for="type in educationTypes" :key="type.id" :value="type.id">
+                            {{ type.name }}
+                        </option>
                     </select>
                  </div>
                  
@@ -237,6 +236,7 @@ const loading = ref(false);
 const error = ref('');
 const success = ref(false);
 const allKeywords = ref([]);
+const educationTypes = ref([]);
 
 const studentId = ref(null);
 
@@ -245,7 +245,17 @@ onMounted(async () => {
         await authStore.fetchLocalUserProfile();
     }
     fetchKeywords();
+    fetchEducationTypes();
 });
+
+const fetchEducationTypes = async () => {
+    try {
+        const res = await api.get('/education-types');
+        educationTypes.value = res;
+    } catch (e) {
+        console.error("Error fetching education types:", e);
+    }
+};
 
 const fetchKeywords = async () => {
     try {

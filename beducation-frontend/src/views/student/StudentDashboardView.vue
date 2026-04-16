@@ -1,47 +1,47 @@
 <template>
-  <div class="space-y-6 animate-fade-in">
-    <!-- Student Header Welcome -->
-    <div class="glass-card p-6 md:p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-sky-500">
+  <div class="space-y-6">
+    <!-- Header Alumno Simplificado -->
+    <div class="section-card flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-slate-900">
       <div>
-        <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">
+        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">
           Hola, {{ authStore.user?.firstName || authStore.user?.name || 'Estudiante' }} 
         </h2>
-        <p class="text-slate-600 mt-2 font-medium">
-          Dashboard Universitario · Fase: <span class="font-bold text-sky-600 px-2 bg-sky-50 rounded-md">Buscando Prácticas</span>
+        <p class="text-slate-500 mt-1 text-sm font-medium">
+          Dashboard Universitario · <span class="text-slate-900">Buscando Prácticas</span>
         </p>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-        <button @click="$router.push('/student/onboarding')" class="btn-secondary whitespace-nowrap">
-          Editar Perfil y CV
+      <div class="flex gap-3">
+        <button @click="$router.push('/gallery')" class="btn-secondary text-sm flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Fotos Eventos
         </button>
-        <button @click="$router.push('/student/search')" class="btn-primary flex items-center gap-2 justify-center whitespace-nowrap bg-sky-600 hover:bg-sky-700 active:scale-95 transition-transform shadow-lg shadow-sky-500/20">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          Buscar Ofertas
+        <button @click="$router.push('/student/onboarding')" class="btn-secondary text-sm">
+          Mi Perfil / CV
+        </button>
+        <button @click="$router.push('/student/search')" class="btn-primary text-sm flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          Explorar Ofertas
         </button>
       </div>
     </div>
 
-    <!-- Perfil Completion Progress -->
-    <div v-if="profileProgress < 100" class="glass-card p-6 rounded-2xl border border-sky-100 bg-sky-50/30">
+    <!-- Progreso Perfil Simplificado -->
+    <div v-if="profileProgress < 100" class="section-card border-slate-200">
         <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-bold text-slate-700">Progreso de tu Perfil</span>
-            <span class="text-sm font-black text-sky-600">{{ profileProgress }}%</span>
+            <span class="label-caps">Completado de Perfil</span>
+            <span class="text-xs font-bold text-slate-900">{{ profileProgress }}%</span>
         </div>
-        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden border border-slate-100 p-0.5">
-            <div class="bg-gradient-to-r from-sky-400 to-sky-600 h-full rounded-full transition-all duration-1000 shadow-sm" :style="{ width: profileProgress + '%' }"></div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-slate-900 h-full transition-all duration-1000" :style="{ width: profileProgress + '%' }"></div>
         </div>
-        <p class="text-[10px] text-slate-500 mt-2 font-medium">Completa tu perfil al 100% para maximizar tus posibilidades de match.</p>
     </div>
     
-    <!-- AI Suggestion & MatchMaker Alert -->
-    <div v-if="aiMatches.length > 0" class="bg-gradient-to-r from-emerald-50 to-primary-50 border border-emerald-100 p-6 rounded-2xl shadow-sm relative overflow-hidden">
-        <div class="absolute -right-10 -bottom-10 opacity-10">
-            <svg class="w-48 h-48 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
-        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <span class="bg-emerald-500 rounded-full w-3 h-3 animate-pulse"></span>
-            Algoritmo T-Matching BeDucation
+    <!-- MatchMaker Simplificado -->
+    <div v-if="aiMatches.length > 0" class="bg-slate-50 border border-slate-200 p-6 rounded-2xl relative overflow-hidden">
+        <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Recomendaciones Inteligentes
         </h3>
         <p class="text-slate-600 mt-1 mb-4">Basado en tus skills y destino (70-20-10 match), tenemos ofertas altamente compatibles para ti.</p>
         
@@ -95,7 +95,15 @@
                                 {{ app.status }}
                             </span>
                         </div>
-                        <p class="text-sm text-slate-500 mt-1">{{ app.opportunity.country }} · Aplicado: {{ new Date(app.createdAt).toLocaleDateString() }}</p>
+                        <p class="text-xs text-slate-500 mt-1">
+                            {{ app.opportunity.country }} · Aplicado: {{ new Date(app.createdAt).toLocaleDateString() }}
+                            <span v-if="app.compatibilityScore" class="ml-2 font-black text-emerald-600">({{ app.compatibilityScore }}% Match)</span>
+                        </p>
+                        <div v-if="app.matchedKeywords" class="mt-2 flex flex-wrap gap-1">
+                             <span v-for="kw in app.matchedKeywords.split(',')" :key="kw" class="text-[8px] bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded border border-slate-100 font-bold uppercase">
+                                {{ kw.trim() }}
+                             </span>
+                        </div>
                     </div>
                     
                     <div class="flex gap-2">

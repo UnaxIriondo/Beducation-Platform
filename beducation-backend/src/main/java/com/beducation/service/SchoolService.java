@@ -9,7 +9,6 @@ import com.beducation.model.User;
 import com.beducation.repository.ApplicationRepository;
 import com.beducation.repository.SchoolRepository;
 import com.beducation.repository.StudentRepository;
-import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -150,99 +149,12 @@ public class SchoolService {
         StudentService.InvitationResult result = studentService.inviteStudent(school, firstName, lastName, email, null);
         
         if (result != null) {
-            emailService.sendStudentInvitationEmail(email, result.clearPassword(), school);
+            emailService.sendStudentInvitationEmail(email, school);
             log.info("Estudiante invitado: {} por la escuela {}", email, school.getName());
             return result.student();
         }
         
         return null;
-    }
-
-    /**
-     * Importación masiva por CSV (hasta 100 estudiantes).
-     * El CSV debe tener cabeceras: firstName, lastName, email.
-     * Soporta tanto comas (,) como punto y coma (;).
-     */
-    public List<Student> importStudentsByCsv(Long schoolId, MultipartFile file) {
-        School school = getValidatedApprovedSchool(schoolId);
-        List<Student> importedStudents = new ArrayList<>();
-
-        try {
-            // Leemos el contenido completo para detectar el separador y manejar codificación
-            byte[] bytes = file.getBytes();
-            // Intentar detectar si hay BOM y saltarlo, y usar UTF-8
-            String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-            if (content.startsWith("\uFEFF")) {
-                content = content.substring(1);
-            }
-
-            String[] lines = content.split("\\r?\\n");
-            if (lines.length == 0) return importedStudents;
-
-            String firstLine = lines[0];
-            
-            // Heurística de separador mejorada
-            char separator = ',';
-            long semiColons = firstLine.chars().filter(ch -> ch == ';').count();
-            long commas = firstLine.chars().filter(ch -> ch == ',').count();
-            if (semiColons > commas) {
-                separator = ';';
-            }
-            log.info("Detectado separador de CSV: '{}' (Semicolons: {}, Commas: {})", separator, semiColons, commas);
-
-            com.opencsv.CSVParser parser = new com.opencsv.CSVParserBuilder()
-                .withSeparator(separator)
-                .build();
-
-            try (CSVReader reader = new com.opencsv.CSVReaderBuilder(new java.io.StringReader(content))
-                    .withCSVParser(parser)
-                    .build()) {
-                
-                List<String[]> rows = reader.readAll();
-                if (!rows.isEmpty()) rows.remove(0); // Quitar cabecera
-
-                if (rows.size() > 100) {
-                    throw new IllegalStateException("El archivo CSV contiene más de 100 registros. Límite: 100.");
-                }
-
-                int rowIdx = 1;
-                for (String[] row : rows) {
-                    rowIdx++;
-                    if (row.length < 3) {
-                        log.warn("Fila {}: Formato insuficiente (columnas: {}). Saltando.", rowIdx, row.length);
-                        continue;
-                    }
-
-                    String firstName = row[0].trim();
-                    String lastName = row[1].trim();
-                    String email = row[2].trim().toLowerCase(); // Normalizar email
-                    String eduCode = row.length >= 4 ? row[3].trim() : null;
-
-                    if (email.isEmpty()) continue;
-
-                    try {
-                        // Llamamos a StudentService.inviteStudent que tiene REQUIRES_NEW
-                        // Esto asegura que cada invitación sea atómica.
-                        StudentService.InvitationResult result = studentService.inviteStudent(school, firstName, lastName, email, eduCode);
-                        
-                        if (result != null) {
-                            importedStudents.add(result.student());
-                            // Intentar enviar email (captura su propia excepción)
-                            emailService.sendStudentInvitationEmail(email, result.clearPassword(), school);
-                        }
-                    } catch (Exception e) {
-                        log.error("Fallo al procesar estudiante en fila {}: {}", rowIdx, e.getMessage());
-                    }
-                }
-            }
-            
-            log.info("Importación finalizada. {} de {} estudiantes procesados.", importedStudents.size(), lines.length - 1);
-            return importedStudents;
-
-        } catch (Exception e) {
-            log.error("Error crítico procesando CSV", e);
-            throw new RuntimeException("Error procesando el archivo CSV: " + e.getMessage());
-        }
     }
 
     /**
@@ -282,6 +194,43 @@ public class SchoolService {
     // ──────────────────────────────────────────────
     // Helper Methods
     // ──────────────────────────────────────────────
+
+    /**
+     * Obtiene estadísticas del funnel para los alumnos de la escuela.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getDashboardStats(Long schoolId) {
+        School school = getValidatedApprovedSchool(schoolId);
+        
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        
+        // Cargar todos los estudiantes de la escuela
+        List<Student> schoolStudents = studentRepository.findBySchoolId(school.getId());
+        
+        // Calcular Funnel de Aplicaciones Global de sus alumnos
+        java.util.Map<String, Long> funnel = new java.util.HashMap<>();
+        for (Application.ApplicationStatus status : Application.ApplicationStatus.values()) {
+            funnel.put(status.name(), 0L);
+        }
+
+        long totalApps = 0;
+        for (Student std : schoolStudents) {
+            // we use applicationRepository to be more direct
+            List<Application> apps = applicationRepository.findByStudentId(std.getId());
+            for (Application app : apps) {
+                String statusName = app.getStatus().name();
+                funnel.put(statusName, funnel.get(statusName) + 1);
+                totalApps++;
+            }
+        }
+
+        stats.put("funnel", funnel);
+        stats.put("totalApplications", totalApps);
+        stats.put("totalStudents", (long) schoolStudents.size());
+        stats.put("registeredStudents", schoolStudents.stream().filter(s -> s.getRegisteredAt() != null).count());
+        
+        return stats;
+    }
 
     private School getValidatedApprovedSchool(Long schoolId) {
         School school = schoolRepository.findById(schoolId)

@@ -47,7 +47,7 @@ public class SchoolController {
     }
 
     @PostMapping("/{schoolId}/invite-student")
-    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')") // o hasRole('SCHOOL') dependiendo configuración Auth0
+    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
     @Operation(summary = "Invitar un alumno (1 a 1)", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Student> inviteStudent(
         @PathVariable Long schoolId,
@@ -57,17 +57,6 @@ public class SchoolController {
         
         Student student = schoolService.inviteStudent(schoolId, firstName, lastName, email);
         return ResponseEntity.ok(student);
-    }
-
-    @PostMapping("/{schoolId}/import-students")
-    @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
-    @Operation(summary = "Importación CSV Masiva (Máx 100 alumnos)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<Student>> importStudents(
-        @PathVariable Long schoolId,
-        @RequestPart("file") MultipartFile file) {
-        
-        List<Student> students = schoolService.importStudentsByCsv(schoolId, file);
-        return ResponseEntity.ok(students);
     }
 
     @GetMapping("/{schoolId}/students")
@@ -117,13 +106,10 @@ public class SchoolController {
         return ResponseEntity.ok(schoolService.getPendingApplications(schoolId, pageable));
     }
 
-    @DeleteMapping("/{schoolId}/students/{studentId}")
+    @GetMapping("/{schoolId}/stats")
     @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
-    @Operation(summary = "Eliminar un estudiante", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Void> deleteStudent(
-        @PathVariable Long schoolId,
-        @PathVariable Long studentId) {
-        schoolService.deleteStudent(schoolId, studentId);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Resumen de Funnel para la Escuela", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<java.util.Map<String, Object>> getStats(@PathVariable Long schoolId) {
+        return ResponseEntity.ok(schoolService.getDashboardStats(schoolId));
     }
 }

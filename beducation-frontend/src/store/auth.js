@@ -79,17 +79,19 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        async loginByEmail(email) {
+        /**
+         * Acceso de desarrollo rápido (Backdoor)
+         * El endpoint /api/debug/login devuelve {token, role, email}
+         */
+        async debugLogin(email) {
             this.loading = true;
             try {
-                // El endpoint /api/debug/login devuelve {token, role, email}
                 const response = await api.get(`/debug/login`, { params: { email } });
                 
                 this.token = response.token;
                 this.role = response.role;
                 sessionStorage.setItem('access_token', this.token);
                 sessionStorage.setItem('user_role', this.role);
-                console.log('Login success. Token and Role saved:', this.role);
                 this.isAuthenticated = true;
                 
                 this.auth0User = {
@@ -103,73 +105,6 @@ export const useAuthStore = defineStore('auth', {
             } catch (err) {
                 console.error('Debug login failed:', err);
                 throw err;
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        /**
-         * Inicio de sesión local (híbrido) con Email y Contraseña.
-         * Usado por estudiantes invitados.
-         */
-        async localLogin(email, password) {
-            this.loading = true;
-            try {
-                const response = await api.post('/auth/login', { email, password });
-                
-                this.token = response.token;
-                this.role = response.role;
-                this.isAuthenticated = true;
-                
-                sessionStorage.setItem('access_token', this.token);
-                sessionStorage.setItem('user_role', this.role);
-                
-                // Simular objeto auth0User para compatibilidad con la interfaz
-                this.auth0User = {
-                    email: response.email,
-                    name: response.email.split('@')[0]
-                };
-
-                await this.fetchLocalUserProfile();
-                return true;
-            } catch (err) {
-                console.error('Local login failed:', err);
-                throw err;
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        // ──────────────────────────────────────────────
-        // MOCK LOGIN PARA PRUEBAS (Evita el paso real de Auth0)
-        // ──────────────────────────────────────────────
-        async mockLogin(role) {
-            this.loading = true;
-            try {
-                if (role === 'STUDENT') {
-                    // Ahora usamos el login de desarrollo real para que la data en backend coincida con la de tu BD local
-                    await this.loginByEmail('unax.iriondo.51345@ikasle.egibide.org');
-                } else if (role === 'SCHOOL') {
-                    await this.loginByEmail('director@ikasle.egibide.org');
-                } else if (role === 'COMPANY') {
-                    await this.loginByEmail('hr.manager@company.com');
-                } else if (role === 'ADMIN') {
-                    await this.loginByEmail('admin@beducation.com');
-                } else {
-                    // Fallback para otros si no están migrados
-                    this.isAuthenticated = true;
-                    this.role = role;
-                    this.token = "mock-jwt-token";
-                    sessionStorage.setItem('access_token', this.token);
-                    this.auth0User = {
-                        sub: `mock-auth0-id-${role.toLowerCase()}`,
-                        name: `Usuario MOCK (${role})`,
-                        email: `test@${role.toLowerCase()}.com`
-                    };
-                    this.user = { id: 1, name: this.auth0User.name, email: this.auth0User.email };
-                }
-            } catch (err) {
-                console.error("Error en mockLogin:", err);
             } finally {
                 this.loading = false;
             }

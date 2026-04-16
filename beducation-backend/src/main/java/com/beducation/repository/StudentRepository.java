@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,6 +36,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
      * @param schoolId ID de la escuela
      */
     Page<Student> findBySchoolId(Long schoolId, Pageable pageable);
+
+    /** Lista todos los estudiantes de la escuela sin paginación para cálculos */
+    List<Student> findBySchoolId(Long schoolId);
 
     /**
      * Búsqueda compleja de estudiantes para el portal de empresa.

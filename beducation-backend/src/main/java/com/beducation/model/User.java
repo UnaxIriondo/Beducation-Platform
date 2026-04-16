@@ -53,13 +53,6 @@ public class User {
     private String auth0Id;
 
     /**
-     * Contraseña hasheada para usuarios que utilizan inicio de sesión
-     * local provisto por el backend (Ej. estudiantes invitados).
-     */
-    @Column(name = "password")
-    private String password;
-
-    /**
      * Email del usuario. Extraído del token JWT al primer login.
      * Único en el sistema.
      */

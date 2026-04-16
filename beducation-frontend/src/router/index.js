@@ -99,6 +99,13 @@ const routes = [
         component: () => import('../views/admin/AdminDashboardView.vue'),
         meta: { requiresAuth: true, role: 'ADMIN' }
     },
+    // Galería (Compartida)
+    {
+        path: '/gallery',
+        name: 'Gallery',
+        component: () => import('../views/shared/GalleryView.vue'),
+        meta: { requiresAuth: true } // No restringido por rol aquí, la lógica de acceso está dentro
+    },
     // Fallbacks
     {
         path: '/unauthorized',

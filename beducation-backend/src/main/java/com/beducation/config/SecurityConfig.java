@@ -22,7 +22,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -75,13 +74,6 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    /**
-     * Bean para encriptar contraseñas.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     /**
      * Cadena principal de filtros de seguridad HTTP.
@@ -113,9 +105,8 @@ public class SecurityConfig {
                     "/swagger-ui.html"
                 ).permitAll()
 
-                // Registro de escuelas y empresas y Auth Local
+                // Registro de escuelas y empresas
                 .requestMatchers(HttpMethod.POST, "/schools", "/companies").permitAll()
-                .requestMatchers("/auth/**").permitAll()
                 
                 // Permit debug endpoints under the API context path (development only)
                 .requestMatchers("/debug/**").permitAll()

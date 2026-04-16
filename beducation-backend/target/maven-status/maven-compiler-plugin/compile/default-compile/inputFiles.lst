@@ -6,6 +6,7 @@ C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\mai
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\OpportunitySearchController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\UserRepository.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\OpportunityRepository.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\PhotoService.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\config\JwtAuthenticationFilter.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\util\MatchingEngine.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\StudentRepository.java
@@ -14,6 +15,7 @@ C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\mai
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\ApplicationService.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\ExpirationScheduler.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\dto\SchoolProfileDto.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\GalleryAccessRequestRepository.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\KeywordController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\dto\CompanyRegistrationDto.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\config\AudienceValidator.java
@@ -30,9 +32,11 @@ C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\mai
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\JwtService.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\StudentDocument.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\CompanyRepository.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\PhotoRepository.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\exception\GlobalExceptionHandler.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\S3StorageService.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\BeducationApplication.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\PhotoController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\Student.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\CompanyController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\Opportunity.java
@@ -40,10 +44,12 @@ C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\mai
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\UserService.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\Application.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\repository\SchoolRepository.java
-C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\AuthController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\dto\StudentProfileDto.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\GalleryAccessRequest.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\ApplicationController.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\Photo.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\service\CompanyService.java
+C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\GalleryAccessController.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\dto\SchoolRegistrationDto.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\model\EducationType.java
 C:\Users\Onddo\Desktop\BEDUCATION\Beducation-Platform\beducation-backend\src\main\java\com\beducation\controller\AdminController.java

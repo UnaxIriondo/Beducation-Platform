@@ -6,42 +6,77 @@
         <p class="text-slate-500">Gestione alumnos, invitaciones y aprobaciones de prácticas en el extranjero.</p>
       </div>
       <div class="mt-4 md:mt-0 space-x-3 flex items-center">
+        <button @click="$router.push('/gallery')" class="btn-secondary text-sm px-4 py-2 flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Fotos Eventos
+        </button>
         <router-link to="/school/profile/edit" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium text-sm rounded-lg transition-colors flex items-center gap-2 border border-slate-200">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
           Editar Perfil
         </router-link>
-        <button @click="openInviteModal" class="btn-secondary text-sm px-4 py-2 flex items-center gap-2">
+        <button @click="openInviteModal" class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
           + Nuevo Alumno (1 a 1)
         </button>
-        <button @click="showImportModal = true" class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-          Importar estudiantes (.csv)
-        </button>
-        <!-- Oculto para disparar click via button -->
-        <input type="file" ref="fileInput" @change="uploadCsv" accept=".csv" class="hidden" />
       </div>
     </div>
 
-    <!-- Pestañas: Alumnos (Perfil | Track App) & Validation (Etapa 4->5) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div @click="openValidationModal" class="bg-white p-4 rounded-xl border border-rose-100 flex items-center justify-between shadow-sm cursor-pointer hover:bg-rose-50/30 transition-colors">
-            <div>
-                 <p class="text-sm text-slate-500 font-medium">Validación Final</p>
-                 <p class="text-2xl font-bold text-slate-800">{{ pendingValidationsCount }}</p>
+    <!-- Pestañas & Funnel Analytics Simplificado -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Resumen Rápido -->
+        <div class="md:col-span-1 space-y-4">
+            <div @click="openValidationModal" class="section-card border-l-4 border-l-rose-500 cursor-pointer hover:bg-rose-50/10 transition-colors">
+                <span class="label-caps">Validaciones Pendientes</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-bold text-slate-900">{{ pendingValidationsCount }}</span>
+                    <span class="text-[10px] text-rose-600 font-bold uppercase">Urgente</span>
+                </div>
             </div>
-            <div class="bg-rose-50 text-rose-500 p-2 rounded-lg relative">
-                <span v-if="pendingValidationsCount > 0" class="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                </span>
-                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+
+            <div class="section-card border-l-4 border-l-slate-200">
+                <span class="label-caps">Alumnos Registrados</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-bold text-slate-900">{{ stats.registeredStudents }}</span>
+                    <span class="text-slate-400 text-xs font-medium">/ {{ stats.totalStudents }} totales</span>
+                </div>
             </div>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-sky-100 flex items-center justify-between shadow-sm">
-             <div>
-                 <p class="text-sm text-slate-500 font-medium">Estudiantes Registrados (Totales)</p>
-                 <p class="text-2xl font-bold text-slate-800">{{ students.length }}</p>
+
+        <!-- Funnel Global Simplificado -->
+        <div class="section-card md:col-span-3">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <span class="label-caps">Estado del Alumnado</span>
+                    <h4 class="text-xs font-medium text-slate-500">Pipeline de candidaturas internacionales</h4>
+                </div>
+            </div>
+
+            <div class="flex items-end gap-2 h-24 px-4">
+                <div v-for="(count, status) in stats.funnel" :key="status" 
+                     class="flex-1 group relative flex flex-col items-center justify-end h-full">
+                    
+                    <span class="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mb-1">{{ count }}</span>
+                    
+                    <div class="w-full rounded-t bg-slate-100 group-hover:bg-slate-200 transition-colors" 
+                         :style="{ height: (stats.totalApplications > 0 ? (count / stats.totalApplications * 100) : 0) + '%' }">
+                    </div>
+
+                    <div class="mt-2 text-center w-full">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter block leading-none">
+                            {{ status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center">
+                <p class="text-[9px] text-slate-400 font-medium">Distribución por estados (Stage 1 a 5)</p>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase">Proceso</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -132,93 +167,6 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
-
-    <!-- Modal Importación CSV -->
-    <div v-if="showImportModal" class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h3 class="text-lg font-bold text-slate-800">Importar Alumnos desde CSV</h3>
-          <button @click="closeImportModal" class="text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-200 rounded-full p-1 transition-colors">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-        </div>
-        <div class="p-6">
-          <p class="text-sm text-slate-600 mb-4">
-            Asegúrese de que el archivo contiene las siguientes columnas en la primera fila: <strong>firstName, lastName, email, educationType</strong>.
-          </p>
-
-          <!-- Zona de Drag & Drop -->
-          <div 
-            v-if="!csvPreview.length"
-            class="border-2 border-dashed rounded-xl p-8 mb-6 text-center transition-colors flex flex-col items-center justify-center cursor-pointer"
-            :class="isDragging ? 'border-sky-500 bg-sky-50' : 'border-slate-300 hover:border-sky-400 hover:bg-slate-50'"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleDrop"
-            @click="triggerFileInput"
-          >
-            <div class="h-12 w-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mb-3">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-            </div>
-            <p class="text-slate-700 font-medium mb-1">Haz clic o arrastra un archivo .csv aquí</p>
-            <p class="text-xs text-slate-500">Tamaño máximo recomendado: 5MB</p>
-          </div>
-
-          <!-- Vista previa del CSV -->
-          <div v-else class="mb-6">
-            <div class="flex justify-between items-center mb-2">
-              <p class="text-sm font-bold text-slate-700">Vista previa ({{ csvPreview.length }} registros detectados)</p>
-              <button @click="resetCsv" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Reemplazar archivo</button>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-lg p-0 overflow-x-auto max-h-60 overflow-y-auto">
-              <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-100 sticky top-0">
-                  <tr class="text-slate-700">
-                    <th class="py-2 px-4 font-bold border-b border-slate-200">#</th>
-                    <th class="py-2 px-4 font-bold border-b border-slate-200">firstName</th>
-                    <th class="py-2 px-4 font-bold border-b border-slate-200">lastName</th>
-                    <th class="py-2 px-4 font-bold border-b border-slate-200">email</th>
-                    <th class="py-2 px-4 font-bold border-b border-slate-200">educationType</th>
-                  </tr>
-                </thead>
-                <tbody class="text-slate-600 font-mono text-xs">
-                  <tr v-for="(row, idx) in csvPreview.slice(0, 5)" :key="idx" class="border-b border-slate-100 last:border-0 hover:bg-white">
-                    <td class="py-2 px-4 text-slate-400">{{ idx + 1 }}</td>
-                    <td class="py-2 px-4">{{ row.firstName }}</td>
-                    <td class="py-2 px-4">{{ row.lastName }}</td>
-                    <td class="py-2 px-4">{{ row.email }}</td>
-                    <td class="py-2 px-4">{{ row.educationType }}</td>
-                  </tr>
-                  <tr v-if="csvPreview.length > 5">
-                     <td colspan="5" class="py-2 px-4 text-center text-slate-400 italic">... y {{ csvPreview.length - 5 }} registros más</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p v-if="csvError" class="mt-2 text-sm text-rose-500 font-medium">{{ csvError }}</p>
-          </div>
-          
-
-
-          <p class="text-xs text-slate-500 mb-6">
-            <span class="font-bold">Nota:</span> Los valores de <code class="bg-slate-100 px-1 rounded">educationType</code> pueden ser: FP_HIGH, UNIVERSITY, BOOTCAMP, etc., o dejarse en blanco.
-          </p>
-
-          <div class="flex justify-end gap-3 mt-4">
-            <button @click="closeImportModal" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200">Cancelar</button>
-            <button 
-              @click="submitCsv" 
-              :disabled="!selectedFile || isImporting" 
-              class="btn-primary text-sm px-6 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="isImporting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-              {{ isImporting ? 'Importando...' : 'Confirmar Importación' }}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -340,15 +288,15 @@
           </div>
 
           <div v-else class="space-y-4">
-            <div v-for="std in studentsToValidate" :key="std.id" class="bg-white border text-sm border-slate-200 rounded-xl p-5 shadow-sm">
+            <div v-for="app in studentsToValidate" :key="app.id" class="bg-white border text-sm border-slate-200 rounded-xl p-5 shadow-sm">
               <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div class="flex items-center gap-4">
                   <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold">
-                    {{ (std.firstName?.charAt(0) || '') + (std.lastName?.charAt(0) || '') }}
+                    {{ (app.student?.firstName?.charAt(0) || '') + (app.student?.lastName?.charAt(0) || '') }}
                   </div>
                   <div>
-                    <h4 class="font-bold text-slate-800">{{ std.firstName }} {{ std.lastName }}</h4>
-                    <p class="text-xs text-slate-500">{{ std.educationType?.code || 'CFGS' }} · {{ std.invitationEmail }}</p>
+                    <h4 class="font-bold text-slate-800">{{ app.student?.firstName }} {{ app.student?.lastName }}</h4>
+                    <p class="text-xs text-slate-500">{{ app.student?.educationType?.code || 'CFGS' }} · {{ app.student?.invitationEmail }}</p>
                   </div>
                 </div>
                 
@@ -357,18 +305,18 @@
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
                     Propuesta de Prácticas
                   </p>
-                  <p class="text-xs text-slate-600 truncate max-w-[200px] md:max-w-none">
-                    <strong>Empresa:</strong> TechCorp Ireland Ltd.<br>
-                    <strong>Puesto:</strong> Junior Frontend Developer<br>
-                    <strong>Fechas:</strong> 01/09/2026 - 30/11/2026
-                  </p>
+                  <div class="text-[11px] text-slate-600 leading-tight">
+                    <p><strong>Empresa:</strong> {{ app.opportunity?.company?.name || '---' }}</p>
+                    <p><strong>Puesto:</strong> {{ app.opportunity?.title }}</p>
+                    <p><strong>Fechas:</strong> {{ formatDate(app.opportunity?.startDate) }} - {{ formatDate(app.opportunity?.endDate) }}</p>
+                  </div>
                 </div>
 
                 <div class="flex items-center gap-2 justify-end">
-                  <button @click="confirmAction(std, 'REJECT')" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-lg transition-colors">
+                  <button @click="confirmAction(app, 'REJECT')" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-lg transition-colors">
                     Rechazar
                   </button>
-                  <button @click="confirmAction(std, 'APPROVE')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1">
+                  <button @click="confirmAction(app, 'APPROVE')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     Aprobar Acuerdo
                   </button>
@@ -416,16 +364,8 @@ import api from '../../services/api';
 
 const authStore = useAuthStore();
 const students = ref([]);
-const fileInput = ref(null);
 const showInviteModal = ref(false);
-const showImportModal = ref(false);
 const isInviting = ref(false);
-
-const isDragging = ref(false);
-const isImporting = ref(false);
-const selectedFile = ref(null);
-const csvPreview = ref([]);
-const csvError = ref('');
 
 const newStudent = ref({
     firstName: '',
@@ -450,6 +390,23 @@ const pendingValidationsCount = computed(() => {
 });
 
 const studentsToValidate = ref([]);
+
+const stats = ref({
+    funnel: {},
+    totalApplications: 0,
+    totalStudents: 0,
+    registeredStudents: 0
+});
+
+const fetchStats = async () => {
+    if (!schoolId.value) return;
+    try {
+        const res = await api.get(`/schools/${schoolId.value}/stats`);
+        stats.value = res;
+    } catch (e) {
+        console.error("Error fetching school stats:", e);
+    }
+}
 
 const fetchStudents = async () => {
     if (!schoolId.value) {
@@ -491,7 +448,7 @@ const fetchPendingApplications = async () => {
 
 onMounted(async () => {
     if (authStore.user) {
-        await Promise.all([fetchStudents(), fetchPendingApplications()]);
+        await Promise.all([fetchStudents(), fetchPendingApplications(), fetchStats()]);
     }
 });
 
@@ -545,108 +502,6 @@ const openFunnelModal = (student) => {
     showFunnelModal.value = true;
 };
 
-const closeImportModal = () => {
-    showImportModal.value = false;
-    resetCsv();
-};
-
-const triggerFileInput = () => {
-    fileInput.value.click();
-};
-
-const handleDrop = (event) => {
-    isDragging.value = false;
-    const files = event.dataTransfer.files;
-    if (files.length > 0) {
-        processFileSelection(files[0]);
-    }
-};
-
-const uploadCsv = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        processFileSelection(file);
-    }
-    // Limpiamos value para permitir re-selección del mismo archivo
-    if (event.target) event.target.value = null;
-};
-
-const processFileSelection = (file) => {
-    csvError.value = '';
-    // Validar tipo mimetype CSV básico
-    if (file.type !== "text/csv" && file.name.split('.').pop() !== 'csv') {
-        csvError.value = "El archivo debe ser un .csv válido.";
-        selectedFile.value = null;
-        csvPreview.value = [];
-        return;
-    }
-
-    selectedFile.value = file;
-    parseCSVPreview(file);
-};
-
-const parseCSVPreview = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(line => line.trim() !== '');
-        
-        if (lines.length <= 1) {
-            csvError.value = "El archivo CSV está vacío o no tiene datos.";
-            return;
-        }
-
-        const headers = lines[0].split(',').map(h => h.trim());
-        const expectedHeaders = ['firstName', 'lastName', 'email', 'educationType'];
-        
-        // Validación básica de cabeceras
-        const isValid = expectedHeaders.every(h => headers.includes(h));
-        // Relajar validación si al menos tiene email, pero para este mock, simularemos simple.
-        
-        const preview = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim());
-            if (values.length >= 3) {
-                preview.push({
-                    firstName: values[0] || '-',
-                    lastName: values[1] || '-',
-                    email: values[2] || '-',
-                    educationType: values[3] || '-'
-                });
-            }
-        }
-        csvPreview.value = preview;
-    };
-    reader.readAsText(file);
-};
-
-const resetCsv = () => {
-    selectedFile.value = null;
-    csvPreview.value = [];
-    csvError.value = '';
-};
-
-const submitCsv = async () => {
-    if (!selectedFile.value || !schoolId.value) return;
-
-    isImporting.value = true;
-    const formData = new FormData();
-    formData.append('file', selectedFile.value);
-
-    try {
-        await api.post(`/schools/${schoolId.value}/import-students`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        
-        await fetchStudents();
-        alert(`Éxito. Los alumnos del CSV han sido invitados.`);
-        closeImportModal();
-    } catch (e) {
-        alert(`Error procesando CSV: ${e.response?.data?.message || e.message}`);
-    } finally {
-        isImporting.value = false;
-    }
-};
 
 const openValidationModal = () => {
     showValidationModal.value = true;
@@ -706,6 +561,19 @@ const getStep4Text = (status) => {
     if (status === 'CONFIRMED') return 'Convenio firmado por todas las partes.';
     if (status === 'ADMIN_APPROVED') return 'Validado por Admin, esperando firma Escuela.';
     return 'El acuerdo se generará tras la aceptación.';
+};
+
+const formatDate = (date) => {
+    if (!date) return '---';
+    return new Date(date).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
+const downloadAgreement = (app) => {
+    alert(`Generando documento para: ${app.student.firstName} ${app.student.lastName}\nEmpresa: ${app.opportunity.company.name}\n\nEn un entorno real, esto descargaría el PDF del Learning Agreement firmado.`);
 };
 
 // Re-intentar carga si el user/id aparece después (útil en mocks o refrescos)

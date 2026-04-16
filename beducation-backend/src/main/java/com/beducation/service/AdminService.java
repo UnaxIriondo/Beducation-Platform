@@ -3,14 +3,18 @@ package com.beducation.service;
 import com.beducation.model.*;
 import com.beducation.model.Application.ApplicationStatus;
 import com.beducation.repository.*;
+import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ============================================================
@@ -39,9 +43,11 @@ public class AdminService {
     private final KeywordRepository keywordRepository;
     private final EducationTypeRepository educationTypeRepository;
     private final StudentRepository studentRepository;
+    private final GalleryAccessRequestRepository galleryAccessRequestRepository;
     private final UserService userService;
     private final EmailService emailService;
     private final SchoolService schoolService;
+    private final StudentService studentService;
 
     // ──────────────────────────────────────────────
     // APROBACIONES DE ENTIDADES (Escuelas y Empresas)
@@ -218,6 +224,9 @@ public class AdminService {
         // Etapa 4: El Administrador debe validar el acuerdo antes de mandarlo a la Escuela
         stats.put("pendingStage4Count", applicationRepository.countByStatus(ApplicationStatus.STUDENT_ACCEPTED));
 
+        // Solicitudes de Galería
+        stats.put("pendingGalleryRequestsCount", galleryAccessRequestRepository.countByStatus(GalleryAccessRequest.AccessStatus.PENDING));
+
         return stats;
     }
 
@@ -264,5 +273,78 @@ public class AdminService {
      */
     public Student inviteStudent(Long schoolId, String first, String last, String email) {
         return schoolService.inviteStudent(schoolId, first, last, email);
+    }
+
+    /**
+     * Importación masiva por CSV (hasta 100 estudiantes) realizada por el Admin.
+     * El Admin debe especificar el ID de la escuela.
+     */
+    public List<Student> importStudentsByCsv(Long schoolId, MultipartFile file) {
+        School school = schoolRepository.findById(schoolId)
+            .orElseThrow(() -> new RuntimeException("Escuela no encontrada: " + schoolId));
+            
+        List<Student> importedStudents = new ArrayList<>();
+
+        try {
+            byte[] bytes = file.getBytes();
+            String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+            if (content.startsWith("\uFEFF")) {
+                content = content.substring(1);
+            }
+
+            String[] lines = content.split("\\r?\\n");
+            if (lines.length == 0) return importedStudents;
+
+            String firstLine = lines[0];
+            char separator = ',';
+            long semiColons = firstLine.chars().filter(ch -> ch == ';').count();
+            long commas = firstLine.chars().filter(ch -> ch == ',').count();
+            if (semiColons > commas) {
+                separator = ';';
+            }
+
+            com.opencsv.CSVParser parser = new com.opencsv.CSVParserBuilder()
+                .withSeparator(separator)
+                .build();
+
+            try (CSVReader reader = new com.opencsv.CSVReaderBuilder(new java.io.StringReader(content))
+                    .withCSVParser(parser)
+                    .build()) {
+                
+                List<String[]> rows = reader.readAll();
+                if (!rows.isEmpty()) rows.remove(0); // Quitar cabecera
+
+                if (rows.size() > 100) {
+                    throw new IllegalStateException("El archivo CSV contiene más de 100 registros. Límite: 100.");
+                }
+
+                int rowIdx = 1;
+                for (String[] row : rows) {
+                    rowIdx++;
+                    if (row.length < 3) continue;
+
+                    String firstName = row[0].trim();
+                    String lastName = row[1].trim();
+                    String email = row[2].trim().toLowerCase();
+                    String eduCode = row.length >= 4 ? row[3].trim() : null;
+
+                    if (email.isEmpty()) continue;
+
+                    try {
+                        StudentService.InvitationResult result = studentService.inviteStudent(school, firstName, lastName, email, eduCode);
+                        if (result != null) {
+                            importedStudents.add(result.student());
+                            emailService.sendStudentInvitationEmail(email, school);
+                        }
+                    } catch (Exception e) {
+                        log.error("Fallo al procesar estudiante en fila {}: {}", rowIdx, e.getMessage());
+                    }
+                }
+            }
+            return importedStudents;
+        } catch (Exception e) {
+            log.error("Error crítico procesando CSV desde Admin", e);
+            throw new RuntimeException("Error procesando el archivo CSV: " + e.getMessage());
+        }
     }
 }

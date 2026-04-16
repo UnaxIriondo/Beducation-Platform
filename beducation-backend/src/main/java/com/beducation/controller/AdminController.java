@@ -6,12 +6,16 @@ import com.beducation.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * ============================================================
@@ -170,5 +174,13 @@ public class AdminController {
         @RequestParam String lastName,
         @RequestParam String email) {
         return ResponseEntity.ok(adminService.inviteStudent(schoolId, firstName, lastName, email));
+    }
+
+    @PostMapping("/students/import-csv")
+    @Operation(summary = "ADMIN IMPORTA ESTUDIANTES POR CSV: Debe especificar la escuela.")
+    public ResponseEntity<List<Student>> importStudents(
+        @RequestParam Long schoolId,
+        @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(adminService.importStudentsByCsv(schoolId, file));
     }
 }

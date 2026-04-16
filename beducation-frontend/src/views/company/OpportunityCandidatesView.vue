@@ -116,21 +116,32 @@
                                 {{ app.student.firstName?.charAt(0) }}{{ app.student.lastName?.charAt(0) }}
                             </div>
                         </div>
-                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center text-[8px] text-white font-bold">
-                            92%
+                        <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full border-2 flex items-center justify-center text-[9px] font-black shadow-sm"
+                             :class="app.compatibilityScore >= 70 ? 'text-emerald-500 border-emerald-100' : 'text-slate-400 border-slate-100'">
+                            {{ app.compatibilityScore || 0 }}%
                         </div>
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <h4 class="text-lg font-extrabold text-slate-800">{{ app.student.firstName }} {{ app.student.lastName }}</h4>
-                        <p class="text-xs text-slate-500 font-medium tracking-tight mb-2">{{ app.student.educationType?.name || 'Perfil por completar' }}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mb-2">{{ app.student.educationType?.name || 'Perfil por completar' }}</p>
                         
-                        <!-- Tags / Skills -->
-                        <div class="flex flex-wrap gap-1.5">
-                            <span v-for="kw in app.student.keywords?.slice(0,3)" :key="kw.id" class="px-2 py-0.5 bg-slate-50 text-[10px] font-bold text-slate-500 rounded border border-slate-100">
+                        <!-- Matched Keywords Transparency -->
+                        <div v-if="app.matchedKeywords" class="mb-3 p-2 bg-emerald-50/50 border border-emerald-100/50 rounded-lg">
+                            <p class="text-[9px] text-emerald-700 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                                Matched on:
+                            </p>
+                            <div class="flex flex-wrap gap-1">
+                                <span v-for="kw in app.matchedKeywords.split(',')" :key="kw" class="px-1.5 py-0.5 bg-white text-[9px] font-bold text-emerald-600 rounded shadow-sm border border-emerald-100">
+                                    {{ kw.trim() }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- All Candidate Tags -->
+                        <div class="flex flex-wrap gap-1">
+                            <span v-for="kw in app.student.keywords?.slice(0,5)" :key="kw.id" class="px-2 py-0.5 bg-slate-50 text-[10px] font-bold text-slate-400 rounded">
                                 {{ kw.name }}
-                            </span>
-                            <span v-if="app.student.keywords?.length > 3" class="px-2 py-0.5 text-[10px] font-bold text-sky-600 bg-sky-50 rounded">
-                                +{{ app.student.keywords.length - 3 }}
                             </span>
                         </div>
                     </div>

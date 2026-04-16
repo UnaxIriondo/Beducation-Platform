@@ -34,20 +34,7 @@ public class StudentService {
     private final KeywordRepository keywordRepository;
     private final EducationTypeRepository educationTypeRepository;
     private final S3StorageService s3StorageService;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    /**
-     * Helper para generar contraseñas aleatorias seguras (8 caracteres).
-     */
-    private String generateRandomPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        java.security.SecureRandom random = new java.security.SecureRandom();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 8; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
 
     // ──────────────────────────────────────────────
     // GESTIÓN DEL PERFIL DE ESTUDIANTE
@@ -146,10 +133,9 @@ public class StudentService {
     }
 
     /**
-     * Resultado de una invitación: El estudiante guardado y su 
-     * contraseña temporal en texto plano para el email.
+     * Resultado de una invitación.
      */
-    public record InvitationResult(Student student, String clearPassword) {}
+    public record InvitationResult(Student student) {}
 
     /**
      * Lógica atómica de invitación (un solo estudiante).
@@ -163,16 +149,11 @@ public class StudentService {
             return null; 
         }
 
-        // Generar contraseña y hashearla
-        String clearPassword = generateRandomPassword();
-        String hashedPassword = passwordEncoder.encode(clearPassword);
-
         Student.StudentBuilder studentBuilder = Student.builder()
             .school(school)
             .firstName(firstName)
             .lastName(lastName)
             .invitationEmail(email)
-            .tempPassword(hashedPassword)
             .invitedAt(LocalDateTime.now());
 
         if (educationCode != null && !educationCode.isBlank()) {
@@ -181,8 +162,8 @@ public class StudentService {
         }
 
         Student saved = studentRepository.save(studentBuilder.build());
-        log.info("Estudiante {} guardado correctamente (Transacción Independiente). Password tem: {}", email, clearPassword);
-        return new InvitationResult(saved, clearPassword);
+        log.info("Estudiante {} guardado correctamente (Transacción Independiente).", email);
+        return new InvitationResult(saved);
     }
 
     @Transactional(readOnly = true)

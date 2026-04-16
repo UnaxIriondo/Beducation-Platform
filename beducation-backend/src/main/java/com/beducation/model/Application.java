@@ -131,6 +131,19 @@ public class Application {
     private LocalDateTime updatedAt;
 
     /**
+     * Score de compatibilidad (0-100) calculado al momento de aplicar.
+     * Basado en el motor T-Matching de keywords.
+     */
+    @Column(name = "compatibility_score")
+    private Integer compatibilityScore;
+
+    /**
+     * Palabras clave que causaron el match (Separadas por comas).
+     */
+    @Column(name = "matched_keywords", length = 500)
+    private String matchedKeywords;
+
+    /**
      * Estados detallados del ciclo de vida de una solicitud.
      * Cada estado corresponde a una etapa del flujo de 5 pasos.
      */

@@ -52,14 +52,11 @@ public class EmailService {
     // EMAILS DE INVITACIÓN / REGISTRO
     // ──────────────────────────────────────────────
 
-    public void sendStudentInvitationEmail(String email, String password, School school) {
+    public void sendStudentInvitationEmail(String email, School school) {
         String subject = "Invitación a BeDucation de " + school.getName();
         String text = "Hola,\n\nTu escuela " + school.getName() + " te ha invitado a unirte a BeDucation, " +
             "la plataforma para encontrar prácticas internacionales.\n\n" +
-            "Tus credenciales de acceso son:\n" +
-            "   - Email: " + email + "\n" +
-            "   - Contraseña temporal: " + password + "\n\n" +
-            "Inicia sesión aquí para completar tu perfil: " + frontendUrl + "/login\n\n" +
+            "Inicia sesión con tu cuenta institucional o personal aquí: " + frontendUrl + "/login\n\n" +
             "El equipo de BeDucation.";
         sendSimpleMail(email, subject, text);
     }
@@ -149,5 +146,26 @@ public class EmailService {
             "Lamentamos informarte de que la empresa ha decidido no continuar con tu candidatura para " +
             opportunity.getTitle() + ".\n\nOjalá tengas suerte en otras ofertas activas.";
         sendSimpleMail(student.getUser().getEmail(), subject, text);
+    }
+
+    // ──────────────────────────────────────────────
+    // EMAILS DE GALERÍA DE FOTOS
+    // ──────────────────────────────────────────────
+
+    public void sendGalleryAccessApprovedEmail(User user) {
+        String subject = "Acceso concedido a la Galería de Fotos - BeDucation";
+        String text = "¡Hola!\n\nTu solicitud de acceso a la galería de fotos ha sido aprobada.\n" +
+            "Ya puedes ver todas las fotos del evento desde tu panel principal.\n\n" +
+            "Disfrútalas,\nEl equipo de BeDucation.";
+        sendSimpleMail(user.getEmail(), subject, text);
+    }
+
+    public void sendGalleryAccessRejectedEmail(User user, String reason) {
+        String subject = "Actualización sobre tu acceso a la Galería";
+        String text = "Hola,\n\nLamentamos informarte que tu solicitud de acceso a la galería ha sido denegada.\n" +
+            (reason != null && !reason.isEmpty() ? "Motivo: " + reason + "\n\n" : "") +
+            "Si crees que esto es un error, contacta con soporte.\n\n" +
+            "Saludos.";
+        sendSimpleMail(user.getEmail(), subject, text);
     }
 }

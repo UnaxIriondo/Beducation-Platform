@@ -1,71 +1,50 @@
 <template>
-  <!-- Main layout con navbar y router view -->
-  <div class="min-h-screen flex flex-col w-full font-outfit">
-    <!-- Navbar global -->
-    <header class="bg-white shadow-sm border-b border-slate-200">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <div class="min-h-screen flex flex-col w-full font-outfit bg-white">
+    <!-- Navbar Minimalista -->
+    <header class="bg-white border-b border-slate-100">
+      <nav class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         
-        <!-- Logo animado -->
-        <div class="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" @click="$router.push('/')">
-          <div class="overflow-hidden rounded-lg shadow-md border border-slate-100 flex items-center justify-center">
-            <img src="/logo.jpg" alt="B Education Logo" class="h-10 w-10 object-cover" />
+        <!-- Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" @click="$router.push('/')">
+          <div class="w-8 h-8 overflow-hidden rounded-lg bg-slate-900 flex items-center justify-center">
+            <span class="text-white font-bold text-xs">B</span>
           </div>
-          <span class="text-2xl font-bold text-slate-900">
-            B Education
+          <span class="text-lg font-bold text-slate-900 tracking-tight">
+            BeDucation
           </span>
         </div>
 
-        <!-- Acciones a la derecha basadas en auth0 state -->
+        <!-- Acciones -->
         <div class="flex items-center gap-4">
-          <div v-if="isLoading" class="animate-pulse text-slate-400 font-medium">Cargando...</div>
+          <div v-if="isLoading" class="text-xs text-slate-400 font-medium">Cargando...</div>
           
           <template v-else-if="!authStore.isAuthenticated">
-            <div class="flex gap-2">
-              <button @click="mockLogin('ADMIN')" class="text-xs bg-rose-100 text-rose-700 font-bold px-2 py-1 rounded hover:bg-rose-200 transition-colors">
-                Test Admin
-              </button>
-              <button @click="mockLogin('SCHOOL')" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded hover:bg-indigo-200 transition-colors">
-                Test Escuela
-              </button>
-              <button @click="mockLogin('STUDENT')" class="text-xs bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded hover:bg-sky-200 transition-colors">
-                Test Alumno
-              </button>
-              <button @click="$router.push('/login')" class="text-xs bg-emerald-600 text-white font-bold px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all shadow-sm">
-                Acceso Alumnos (Password)
-              </button>
-            </div>
+            <button @click="$router.push('/login')" class="btn-primary text-xs py-2 px-4">
+              Iniciar Sesión
+            </button>
           </template>
 
           <template v-else>
-            <!-- Dropdown o Menú rápido de Auth0 mockeado -->
             <div class="flex items-center gap-4">
-              <span class="text-sm text-slate-500 hidden sm:block">
-                Bienvenid@, <b>{{ authStore.user?.name || 'Usuario' }}</b>
-                <span class="ml-1 px-1.5 py-0.5 bg-slate-100 text-[10px] rounded border border-slate-200 font-bold uppercase tracking-wider text-slate-400">
+              <span class="text-[11px] text-slate-500 font-medium uppercase tracking-wider hidden sm:block">
+                {{ authStore.user?.name || 'Usuario' }}
+                <span class="ml-2 px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-100 text-[10px] font-bold">
                   {{ authStore.role }}
                 </span>
               </span>
-              <div class="w-10 h-10 rounded-full border-2 border-primary-200 bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                {{ authStore.user?.name ? authStore.user.name.charAt(0) : 'U' }}
-              </div>
               
-              <button @click="logoutAndClear" class="text-rose-600 hover:text-rose-700 font-medium transition-colors cursor-pointer text-sm bg-rose-50 px-3 py-1.5 rounded-md hover:bg-rose-100">
-                Salir (Mock)
+              <button @click="logoutAndClear" class="text-slate-400 hover:text-slate-900 font-bold text-[11px] uppercase tracking-widest transition-colors">
+                Salir
               </button>
             </div>
           </template>
         </div>
-
       </nav>
     </header>
 
-    <!-- App Body (Router target) -->
-    <main class="flex-grow flex flex-col bg-slate-50 relative overflow-hidden">
-      <!-- Glow Background Elements for Modern Look -->
-      <div class="absolute top-0 -left-4 w-72 h-72 bg-primary-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none animate-blob"></div>
-      <div class="absolute top-0 -right-4 w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none animate-blob animation-delay-2000"></div>
-      
-      <div class="flex-grow z-10 container mx-auto px-4 py-8">
+    <!-- Main Content -->
+    <main class="flex-grow bg-white">
+      <div class="max-w-7xl mx-auto px-6 py-10">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -74,9 +53,9 @@
       </div>
     </main>
 
-    <!-- Pie de página simple -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-slate-500 text-sm">
-      <p>© 2026 BeDucation Platform. Todos los derechos reservados.</p>
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-50 py-10 text-center">
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">© 2026 BeDucation Platform </p>
     </footer>
 
   </div>
@@ -88,8 +67,7 @@ import { useAuthStore } from './store/auth';
 import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-// Auth0 es mantenido para la integracion final, pero vamos a usar AuthStore mockeado ahora
-const { isAuthenticated, user, isLoading, loginWithRedirect, logout, getAccessTokenSilently } = useAuth0();
+const { isAuthenticated, user, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -101,7 +79,6 @@ onMounted(() => {
       getAccessTokenSilently
     });
   } else if (authStore.isAuthenticated && authStore.role && !authStore.user) {
-    // Si el usuario recargó la página (F5) con un mock login activo, restauramos su perfil
     authStore.fetchLocalUserProfile();
   }
 });
@@ -114,24 +91,9 @@ watch(isAuthenticated, (newState) => {
       getAccessTokenSilently
     });
   } else if (!authStore.isAuthenticated) {
-      // Solo limpiamos si TAMBIÉN el mock origin está desautenticado,
-      // para evitar que auth0 borre nuestra sesion mock local por error
       authStore.clearSession();
   }
 });
-
-const login = () => {
-  loginWithRedirect();
-};
-
-const mockLogin = async (role) => {
-  await authStore.mockLogin(role);
-  // Redireccionar al dashboard correspondiente
-  if (role === 'STUDENT') router.push('/student/dashboard');
-  if (role === 'COMPANY') router.push('/company/dashboard');
-  if (role === 'SCHOOL') router.push('/school/dashboard');
-  if (role === 'ADMIN') router.push('/admin/dashboard');
-};
 
 const logoutAndClear = () => {
   authStore.clearSession();
@@ -140,28 +102,17 @@ const logoutAndClear = () => {
 </script>
 
 <style>
-/* Transition simple de vistas */
+/* Reset base styles */
+body {
+  @apply bg-white;
+}
+
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(10px);
-}
-
-/* Keyframes de aesthetic glow effects */
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-.animate-blob {
-  animation: blob 7s infinite;
-}
-.animation-delay-2000 {
-  animation-delay: 2s;
 }
 </style>

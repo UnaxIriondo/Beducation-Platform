@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * ============================================================
@@ -45,6 +46,7 @@ public class ApplicationService {
     private final StudentRepository studentRepository;
     private final OpportunityRepository opportunityRepository;
     private final EmailService emailService;
+    private final com.beducation.util.MatchingEngine matchingEngine;
 
     // ── Tiempo de expiración de solicitudes sin actividad ──
     private static final int EXPIRY_DAYS = 30;
@@ -90,12 +92,24 @@ public class ApplicationService {
             throw new IllegalStateException("Ya has enviado una solicitud para esta oferta.");
         }
 
+        // Calcular compatibilidad mediante el MatchingEngine
+        double rawScore = matchingEngine.calculateScore(student, opportunity);
+        int finalScore = (int) (rawScore * 100);
+        
+        List<String> commonKeywords = student.getKeywords().stream()
+            .filter(sk -> opportunity.getKeywords().stream().anyMatch(ok -> ok.getId().equals(sk.getId())))
+            .map(Keyword::getName)
+            .collect(java.util.stream.Collectors.toList());
+        String kwString = String.join(", ", commonKeywords);
+
         // Crear la solicitud en Etapa 1
         Application application = Application.builder()
             .student(student)
             .opportunity(opportunity)
             .stage(1)
             .status(ApplicationStatus.APPLIED)
+            .compatibilityScore(finalScore)
+            .matchedKeywords(kwString)
             .appliedAt(LocalDateTime.now())
             .expiresAt(LocalDateTime.now().plusDays(EXPIRY_DAYS))
             .statusUpdatedAt(LocalDateTime.now())
@@ -106,8 +120,8 @@ public class ApplicationService {
         // Notificar a la empresa por email
         emailService.sendApplicationReceivedEmail(opportunity.getCompany(), student, opportunity);
 
-        log.info("Nueva solicitud creada: estudiante={} oferta={} applicationId={}",
-            studentId, opportunityId, saved.getId());
+        log.info("Nueva solicitud creada: estudiante={} oferta={} score={} application={}",
+            studentId, opportunityId, finalScore, saved.getId());
 
         return saved;
     }
