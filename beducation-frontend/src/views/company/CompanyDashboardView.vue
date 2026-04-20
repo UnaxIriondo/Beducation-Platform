@@ -13,7 +13,7 @@
             </button>
             <button @click="openCreateModal" class="btn-primary flex items-center gap-2 bg-slate-900 hover:bg-slate-800 shadow-sm">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Crear Nueva Vacante (DRAFT)
+                Crear Nueva Vacante
             </button>
         </div>
     </div>
@@ -100,9 +100,9 @@
                     👁 Evaluar y Revisar Candidatos 
                     <span class="bg-sky-500 text-white rounded-full px-1.5 py-0.5 text-[10px] ml-1">{{ opp.applicationsCount || 0 }}</span>
                 </button>
-                <button v-if="opp.status === 'DRAFT'" @click="publishOpportunity(opp)" class="text-sm text-amber-600 font-bold hover:text-amber-700 flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-lg transition-colors border border-amber-100">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                    Enviar a Publicación
+                <button v-if="opp.status === 'DRAFT'" @click="publishOpportunity(opp)" class="text-sm text-emerald-600 font-bold hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors border border-emerald-100">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Publicar Oferta
                 </button>
                 <button @click="editOpportunity(opp)" class="text-sm text-slate-500 font-bold hover:text-slate-700 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -181,7 +181,7 @@
                     <button type="button" @click="closeModal" class="px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-all border border-slate-200">Cancelar</button>
                     <button type="submit" :disabled="saving" class="btn-primary text-sm px-8 py-2.5 flex items-center gap-2 shadow-lg shadow-sky-100">
                         <span v-if="saving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        {{ saving ? 'Guardando...' : (editingId ? 'Actualizar Vacante' : 'Crear en Borrador') }}
+                        {{ saving ? 'Guardando...' : (editingId ? 'Actualizar Vacante' : 'Publicar Oferta') }}
                     </button>
                 </div>
             </form>
@@ -272,7 +272,7 @@ const openCreateModal = () => {
         endDate: '',
         spots: 1,
         educationTypeId: '',
-        status: 'DRAFT'
+        status: 'APPROVED'
     };
     showModal.value = true;
 };
@@ -316,11 +316,9 @@ const saveOpportunity = async () => {
 };
 
 const publishOpportunity = async (opp) => {
-    if (!confirm('¿Deseas enviar esta oferta a revisión para su publicación?')) return;
+    if (!confirm('¿Deseas publicar esta oferta? Será visible para los estudiantes de inmediato.')) return;
     try {
-        const updateData = { ...opp, status: 'PENDING_REVIEW' };
-        // We only send the fields needed by the DTO or the full object
-        await api.put(`/companies/${companyId.value}/opportunities/${opp.id}`, { status: 'PENDING_REVIEW' });
+        await api.put(`/companies/${companyId.value}/opportunities/${opp.id}`, { status: 'APPROVED' });
         await fetchData();
     } catch (e) {
         alert("Error al publicar: " + (e.message || 'Error desconocido'));

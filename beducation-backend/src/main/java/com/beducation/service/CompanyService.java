@@ -111,12 +111,18 @@ public class CompanyService {
     // ──────────────────────────────────────────────
 
     /**
-     * Crear u ofrecer una oportunidad de prácticas "en borrador/DRAFT".
-     * O enviarla directamente al estado PENDING_REVIEW 
-     * al publicar indicando el state apropiado en el DTO.
+     * Crear y publicar una oportunidad de prácticas.
+     * Las ofertas se publican directamente como APPROVED sin necesidad de revisión.
+     * La empresa no requiere estar en estado APPROVED para publicar.
      */
     public Opportunity submitOpportunity(Long companyId, OpportunityDto dto) {
-        Company company = checkCompanyActiveStatus(companyId);
+        Company company = companyRepository.findById(companyId)
+            .orElseThrow(() -> new RuntimeException("Empresa solicitada no existente."));
+
+        // Las nuevas ofertas se publican directamente como APPROVED
+        Opportunity.OpportunityStatus status = (dto.getStatus() != null && dto.getStatus() != Opportunity.OpportunityStatus.DRAFT)
+            ? dto.getStatus()
+            : Opportunity.OpportunityStatus.APPROVED;
 
         Opportunity opportunity = Opportunity.builder()
             .company(company)
@@ -128,7 +134,7 @@ public class CompanyService {
             .endDate(dto.getEndDate())
             .spots(dto.getSpots() != null ? dto.getSpots() : 1)
             .spotsAvailable(dto.getSpots() != null ? dto.getSpots() : 1)
-            .status(dto.getStatus() != null ? dto.getStatus() : Opportunity.OpportunityStatus.DRAFT)
+            .status(status)
             .build();
 
         // Enlazando el tipo de formación y keywords extraídos de DTO
@@ -141,20 +147,20 @@ public class CompanyService {
             opportunity.setKeywords(kws);
         }
 
-        log.info("La Empresa {} creó una oportunidad de título: {} (Estado: {})", 
+        log.info("La Empresa {} publicó una oportunidad: {} (Estado: {})",
                  company.getName(), opportunity.getTitle(), opportunity.getStatus());
-                 
+
         return opportunityRepository.save(opportunity);
     }
 
     /**
-     * Empresa edita la información de su oferta. Puede requerir
-     * volver al estado de Review, el controlador lo evalúa.
+     * Empresa edita la información de su oferta.
+     * No requiere que la empresa esté aprobada.
      */
     public Opportunity updateOpportunity(Long oppId, Long companyId, OpportunityDto dto) {
         Opportunity opp = opportunityRepository.findById(oppId)
             .orElseThrow(() -> new RuntimeException("Oferta no encontrada con ID: " + oppId));
-        
+
         if (!opp.getCompany().getId().equals(companyId)) {
             throw new IllegalStateException("No tienes permiso de autoría sobre esta Oferta.");
         }
@@ -163,8 +169,15 @@ public class CompanyService {
         if (dto.getDescription() != null) opp.setDescription(dto.getDescription());
         if (dto.getStartDate() != null) opp.setStartDate(dto.getStartDate());
         if (dto.getEndDate() != null) opp.setEndDate(dto.getEndDate());
-        if (dto.getStatus() != null) opp.setStatus(dto.getStatus());
-        
+        // Al actualizar, si el estado pasa de DRAFT se publica directamente como APPROVED
+        if (dto.getStatus() != null) {
+            Opportunity.OpportunityStatus newStatus = dto.getStatus();
+            if (newStatus == Opportunity.OpportunityStatus.PENDING_REVIEW) {
+                newStatus = Opportunity.OpportunityStatus.APPROVED;
+            }
+            opp.setStatus(newStatus);
+        }
+
         return opportunityRepository.save(opp);
     }
 
@@ -212,13 +225,9 @@ public class CompanyService {
         return stats;
     }
 
+    /** Obtiene la empresa por ID. No valida su estado de aprobación. */
     private Company checkCompanyActiveStatus(Long companyId) {
-        Company company = companyRepository.findById(companyId)
+        return companyRepository.findById(companyId)
             .orElseThrow(() -> new RuntimeException("Empresa solicitada no existente."));
-            
-        if (company.getStatus() != School.ApprovalStatus.APPROVED) {
-            throw new IllegalStateException("La empresa está bloqueada en un estado no Aprobado.");
-        }
-        return company;
     }
 }
