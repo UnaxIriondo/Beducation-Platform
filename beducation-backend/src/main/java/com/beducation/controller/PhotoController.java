@@ -16,11 +16,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * ============================================================
- * Controlador: PhotoController
- * ============================================================
- * Gestión de las fotografías de la galería pública.
- * ============================================================
+ * CONTROLADOR: PhotoController
+ * ----------------------------
+ * Gestiona el acceso y la subida de imágenes a la Galería Institucional.
+ * Nota: Solo los administradores pueden subir o eliminar fotos, mientras
+ * que el resto de usuarios requieren un permiso de acceso verificado.
  */
 @RestController
 @RequestMapping("/gallery/photos")
@@ -28,6 +28,7 @@ import java.util.List;
 @Tag(name = "Gallery Photos")
 @SecurityRequirement(name = "bearer-key")
 public class PhotoController {
+
 
     private final PhotoService photoService;
     private final SecurityUtils securityUtils;

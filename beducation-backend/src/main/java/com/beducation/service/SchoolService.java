@@ -25,18 +25,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ============================================================
- * Servicio: SchoolService
- * ============================================================
- * Maneja el registro de escuelas, el panel de gestión, y la 
- * invitación de estudiantes manual y masiva (CSV).
- * ============================================================
+ * SERVICIO: SchoolService
+ * -----------------------
+ * Punto central para la gestión de Centros Educativos (Escuelas/Colleges).
+ * Responsabilidades:
+ * - Registro y ciclo de vida de la entidad School.
+ * - Gestión de Alumnos vinculados al centro.
+ * - Invitaciones masivas vía CSV.
+ * - Panel de control y estadísticas del centro.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class SchoolService {
+
 
     private final SchoolRepository schoolRepository;
     private final StudentRepository studentRepository;
@@ -316,3 +319,4 @@ public class SchoolService {
         }
     }
 }
+

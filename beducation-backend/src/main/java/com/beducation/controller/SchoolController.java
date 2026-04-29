@@ -50,11 +50,11 @@ public class SchoolController {
     @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
     @Operation(summary = "Invitar un alumno (1 a 1)", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Student> inviteStudent(
-        @PathVariable Long schoolId,
-        @RequestParam String firstName,
-        @RequestParam String lastName,
-        @RequestParam String email) {
-        
+            @PathVariable Long schoolId,
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam String email) {
+
         Student student = schoolService.inviteStudent(schoolId, firstName, lastName, email);
         return ResponseEntity.ok(student);
     }
@@ -63,8 +63,8 @@ public class SchoolController {
     @PreAuthorize("hasAuthority('SCOPE_SCHOOL') or hasAuthority('SCOPE_ADMIN')")
     @Operation(summary = "Dashboard de alumnos de la escuela", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Page<Student>> getStudents(
-        @PathVariable Long schoolId,
-        Pageable pageable) {
+            @PathVariable Long schoolId,
+            Pageable pageable) {
         return ResponseEntity.ok(schoolService.getSchoolStudents(schoolId, pageable));
     }
 
@@ -81,14 +81,15 @@ public class SchoolController {
     @PreAuthorize("hasAuthority('SCOPE_SCHOOL') or hasAuthority('SCOPE_ADMIN')")
     @Operation(summary = "Actualizar perfil de la escuela", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<School> updateProfile(
-        @PathVariable Long schoolId,
-        @RequestBody @Valid SchoolProfileDto dto) {
-        
-        // Verificación de seguridad básica: la escuela solo puede editarse a sí misma 
-        // (a menos que sea ADMIN, pero aquí simplificamos con la protección del servicio si fuera necesario)
+            @PathVariable Long schoolId,
+            @RequestBody @Valid SchoolProfileDto dto) {
+
+        // Verificación de seguridad básica: la escuela solo puede editarse a sí misma
+        // (a menos que sea ADMIN, pero aquí simplificamos con la protección del
+        // servicio si fuera necesario)
         User currentUser = securityUtils.getCurrentUser();
         School currentSchool = schoolService.getSchoolByUserId(currentUser.getId());
-        
+
         if (!currentUser.getRole().equals(User.Role.ADMIN) && !currentSchool.getId().equals(schoolId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -101,8 +102,8 @@ public class SchoolController {
     @PreAuthorize("hasAuthority('SCOPE_SCHOOL')")
     @Operation(summary = "Obtener aplicaciones pendientes de validación", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Page<Application>> getPendingApplications(
-        @PathVariable Long schoolId,
-        Pageable pageable) {
+            @PathVariable Long schoolId,
+            Pageable pageable) {
         return ResponseEntity.ok(schoolService.getPendingApplications(schoolId, pageable));
     }
 
@@ -121,6 +122,6 @@ public class SchoolController {
             @RequestParam("file") MultipartFile file) {
         // Aprovechamos la lógica de AdminService pero restringida a la escuela actual
         // En una refactorización ideal, esta lógica estaría en SchoolService
-        return ResponseEntity.ok(schoolService.getAdminService().importStudentsByCsv(schoolId, file));
+        return ResponseEntity.ok(schoolService.importStudentsByCsv(schoolId, file));
     }
 }

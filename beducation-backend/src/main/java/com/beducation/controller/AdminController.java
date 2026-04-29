@@ -18,19 +18,24 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * ============================================================
- * Controlador: AdminController
- * ============================================================
- * Panel de operaciones para un usuario ADMIN.
- * ============================================================
+ * CONTROLADOR: AdminController
+ * ----------------------------
+ * Centro de mando para administradores de BeDucation.
+ * Permite la gestión global del sistema, incluyendo:
+ * - Aprobación de nuevas instituciones (Escuelas y Empresas).
+ * - Auditoría y validación de ofertas de prácticas.
+ * - Supervisión del flujo de placements (Etapa 4).
+ * - Mantenimiento de diccionarios (Keywords, Tipos de formación).
+ * - Gestión disciplinaria de usuarios (suspensión/eliminación).
  */
 @RestController
 @RequestMapping("/admin")
-@PreAuthorize("hasAuthority('SCOPE_ADMIN')") // o hasRole('ADMIN')
+@PreAuthorize("hasAuthority('SCOPE_ADMIN')") 
 @RequiredArgsConstructor
 @Tag(name = "Admin")
 @SecurityRequirement(name = "bearer-key")
 public class AdminController {
+
 
     private final AdminService adminService;
     private final SecurityUtils securityUtils;

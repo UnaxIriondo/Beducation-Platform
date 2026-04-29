@@ -25,17 +25,15 @@
           </template>
 
           <template v-else>
-            <div class="flex items-center gap-4">
-              <span class="text-[11px] text-slate-500 font-medium uppercase tracking-wider hidden sm:block">
-                {{ authStore.user?.name || 'Usuario' }}
-                <span class="ml-2 px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-100 text-[10px] font-bold">
-                  {{ authStore.role }}
+            <div class="flex items-center gap-6">
+              <div class="flex flex-col items-end">
+                <span class="text-sm font-bold text-slate-900 leading-none">
+                  {{ authStore.user?.firstName ? (authStore.user.firstName + ' ' + (authStore.user.lastName || '')) : (authStore.user?.name || 'Usuario') }}
                 </span>
-              </span>
-              
-              <button @click="logoutAndClear" class="text-slate-400 hover:text-slate-900 font-bold text-[11px] uppercase tracking-widest transition-colors">
-                Salir
-              </button>
+                <button @click="logoutAndClear" class="text-[10px] font-black text-slate-400 hover:text-rose-600 uppercase tracking-[0.2em] mt-1.5 transition-colors">
+                  Cerrar Sesión
+                </button>
+              </div>
             </div>
           </template>
         </div>
@@ -58,19 +56,35 @@
       <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">© 2026 BeDucation Platform </p>
     </footer>
 
+    <!-- Notificaciones Globales -->
+    <NotificationToast />
+
   </div>
 </template>
 
+
 <script setup>
+/**
+ * COMPONENTE PRINCIPAL: App.vue
+ * -----------------------------
+ * Define el Layout global de la aplicación.
+ * Gestiona la sincronización inicial entre el SDK de Auth0 y el store de Pinia.
+ */
 import { useAuth0 } from '@auth0/auth0-vue';
 import { useAuthStore } from './store/auth';
 import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import NotificationToast from './components/common/NotificationToast.vue';
+
 
 const { isAuthenticated, user, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
 const authStore = useAuthStore();
 const router = useRouter();
 
+/**
+ * Al montar, si ya estamos logueados en Auth0, inicializamos nuestro store local.
+ * Esto asegura que tengamos el token y el rol cargado en toda la aplicación.
+ */
 onMounted(() => {
   if (isAuthenticated.value) {
     authStore.initialize({
@@ -79,10 +93,14 @@ onMounted(() => {
       getAccessTokenSilently
     });
   } else if (authStore.isAuthenticated && authStore.role && !authStore.user) {
+    // Si tenemos sesión local pero no datos de perfil, intentamos recuperarlos
     authStore.fetchLocalUserProfile();
   }
 });
 
+/**
+ * Observa cambios en el estado de Auth0 (ej. tras redirección de login exitosa)
+ */
 watch(isAuthenticated, (newState) => {
   if (newState) {
     authStore.initialize({
@@ -95,11 +113,15 @@ watch(isAuthenticated, (newState) => {
   }
 });
 
+/**
+ * Cierra la sesión en nuestro sistema y redirige a la home.
+ */
 const logoutAndClear = () => {
   authStore.clearSession();
   router.push('/');
 };
 </script>
+
 
 <style>
 /* Reset base styles */

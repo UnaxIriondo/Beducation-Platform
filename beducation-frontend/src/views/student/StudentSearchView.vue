@@ -79,20 +79,30 @@
 </template>
 
 <script setup>
+/**
+ * LÓGICA: Buscador de Vacantes para Estudiantes
+ * --------------------------------------------
+ * Permite a los alumnos filtrar ofertas por país, palabras clave y tipo de formación.
+ */
 import { ref, onMounted, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../services/api';
 
 const router = useRouter();
-const offers = ref([]);
-const loading = ref(true);
+const offers = ref([]);       // Lista de ofertas recuperadas
+const loading = ref(true);     // Estado de carga para el skeleton
 
+// Filtros reactivos vinculados a los inputs de la UI
 const filters = reactive({
     country: '',
     keyword: '',
     educTypeId: null
 });
 
+/**
+ * Realiza la llamada a la API con los filtros actuales.
+ * Utiliza el endpoint '/opportunities/search' que soporta paginación y filtrado dinámico.
+ */
 const loadOffers = async () => {
     loading.value = true;
     try {
@@ -103,9 +113,9 @@ const loadOffers = async () => {
                educTypeId: filters.educTypeId || undefined
             }
         });
-        offers.value = res.content || [];
+        offers.value = res.content || []; // El backend devuelve una estructura Page de Spring Data
     } catch (e) {
-        console.error("Error searching offers:", e);
+        console.error("Error al buscar ofertas:", e);
     } finally {
         loading.value = false;
     }
@@ -113,32 +123,46 @@ const loadOffers = async () => {
 
 const educTypes = ref([]);
 
+/**
+ * Carga inicial: Obtiene tipos de educación y luego carga las ofertas iniciales.
+ */
 const loadInitialData = async () => {
     try {
         const res = await api.get('/education-types');
         educTypes.value = res || [];
     } catch (e) {
-        console.warn("Could not load education types:", e);
+        console.warn("No se pudieron cargar los tipos de educación:", e);
     }
     loadOffers();
 };
 
 onMounted(loadInitialData);
 
+/**
+ * Ejecuta la búsqueda (usado en el botón y con ENTER en el buscador).
+ */
 const performSearch = () => {
     loadOffers();
 };
 
+/**
+ * Limpia los filtros y recarga la lista completa.
+ */
 const resetFilters = () => {
     filters.country = '';
     filters.keyword = '';
     loadOffers();
 };
 
+/**
+ * Navega al detalle de una oferta específica.
+ */
 const goToOffer = (id) => {
     router.push(`/student/offers/${id}`);
 };
 
+// Observadores para recarga automática al cambiar el país o el tipo de estudio
 watch(() => filters.country, loadOffers);
 watch(() => filters.educTypeId, loadOffers);
 </script>
+

@@ -16,17 +16,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * ============================================================
- * Controlador: StudentController
- * ============================================================
- * Endpoints REST del Portal de Estudiante.
- * ============================================================
+ * CONTROLADOR: StudentController
+ * ------------------------------
+ * Gestiona el ciclo de vida del Estudiante dentro de la plataforma.
+ * Responsabilidades:
+ * - Recuperación del perfil propio (con sincronización Auth0 automática).
+ * - Proceso de Onboarding y actualización de datos personales/académicos.
+ * - Subida de documentación (CV, fotos) al almacenamiento en la nube (AWS S3).
  */
 @RestController
 @RequestMapping("/students")
 @RequiredArgsConstructor
-@Tag(name = "Student Portal", description = "Endpoints para el onboarding, perfil de alumno y subida a AWS. Aplicaciones y matching van aparte.")
+@Tag(name = "Student Portal", description = "Endpoints para el onboarding, perfil de alumno y subida a AWS.")
 public class StudentController {
+
     
     private final StudentService studentService;
     private final SecurityUtils securityUtils;

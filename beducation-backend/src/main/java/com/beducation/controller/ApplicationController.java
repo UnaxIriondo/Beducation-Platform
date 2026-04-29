@@ -17,19 +17,19 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================
- * Controlador: ApplicationController
- * ============================================================
- * Rutas de control del motor de estados de las Aplicaciones o
- * Solicitudes de Colocación (Placements de prácticas) — Flujo de 5 pasos.
- * ============================================================
+ * CONTROLADOR: ApplicationController
+ * ---------------------------------
+ * Motor de estados de las Solicitudes de Prácticas (Workflow de 5 Pasos).
+ * Este controlador expone la API para que Estudiantes, Empresas y Escuelas
+ * interactúen en el proceso de selección y confirmación de plazas.
  */
 @RestController
 @RequestMapping("/applications")
 @RequiredArgsConstructor
-@Tag(name = "Application Workflow Engine", description = "Endpoints de control que mueven el placement las 5 etapas entre Empleador y Candidato.")
+@Tag(name = "Application Workflow Engine")
 @SecurityRequirement(name = "bearerAuth")
 public class ApplicationController {
+
 
     private final ApplicationService applicationService;
 

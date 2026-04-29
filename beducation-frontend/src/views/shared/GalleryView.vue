@@ -215,9 +215,11 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
+import { useNotificationStore } from '../../store/notifications';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const notifications = useNotificationStore();
 const activeTab = ref('gallery');
 const hasAccess = ref(false);
 const myRequest = ref(null);
@@ -278,9 +280,10 @@ const requestAccess = async () => {
     loading.value = true;
     try {
         await api.post('/gallery/access/request');
+        notifications.success("Solicitud de acceso enviada. El administrador la revisará pronto.");
         await fetchMyRequest();
     } catch (e) {
-        alert("No se pudo enviar la solicitud: " + e.message);
+        notifications.error("No se pudo enviar la solicitud: " + e.message);
     } finally {
         loading.value = false;
     }
@@ -312,9 +315,10 @@ const processRequest = async (requestId, approve) => {
         await api.patch(`/gallery/access/admin/process/${requestId}`, null, {
             params: { approve }
         });
+        notifications.success(approve ? "Acceso concedido." : "Solicitud rechazada.");
         await fetchPendingRequests();
     } catch (e) {
-        alert("Error al procesar solicitud: " + e.message);
+        notifications.error("Error al procesar solicitud: " + e.message);
     }
 };
 
@@ -335,12 +339,13 @@ const handleUpload = async () => {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
 
+        notifications.success("Fotos subidas correctamente a la galería.");
         showUploadModal.value = false;
         selectedFiles.value = [];
         uploadDescription.value = '';
         fetchPhotos();
     } catch (e) {
-        alert("Error al subir fotos: " + e.message);
+        notifications.error("Error al subir fotos: " + e.message);
     } finally {
         uploading.value = false;
     }
@@ -350,11 +355,13 @@ const deletePhoto = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar esta foto permanentemente?')) return;
     try {
         await api.delete(`/gallery/photos/${id}`);
+        notifications.success("Foto eliminada.");
         fetchPhotos();
     } catch (e) {
-        alert("No se pudo eliminar la foto.");
+        notifications.error("No se pudo eliminar la foto.");
     }
 };
+
 
 /**
  * Resuelve la URL de la imagen. 

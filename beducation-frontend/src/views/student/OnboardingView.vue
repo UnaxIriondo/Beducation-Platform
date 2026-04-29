@@ -174,13 +174,26 @@
 </template>
 
 <script setup>
+/**
+ * LÓGICA: Configuración de Perfil Estudiantil (Onboarding)
+ * -------------------------------------------------------
+ * Este componente es el "Wizard" que deben completar los estudiantes al entrar
+ * por primera vez tras ser invitados. 
+ * Pasos: 
+ * 1. Validación de datos personales.
+ * 2. Perfil académico, preferencias de destino y habilidades (Keywords para Matching).
+ * 3. Subida de documentación obligatoria (CV) a AWS S3.
+ */
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../store/auth';
 import api from '../../services/api';
+import { useNotificationStore } from '../../store/notifications';
+
 
 const router = useRouter();
 const authStore = useAuthStore();
+const notifications = useNotificationStore();
 const currentStep = ref(1);
 
 const AVAILABLE_COUNTRIES = [
@@ -271,11 +284,9 @@ const fetchKeywords = async () => {
 
 // Reactividad: Si authStore.user cambia (cuando termina de cargar), actualizamos el formulario
 watch(() => authStore.user, (newUser) => {
-    console.log('Watcher triggered in onboarding. Full object:', newUser);
     if (newUser) {
         // Intentamos capturar el ID de varias formas por seguridad
         studentId.value = newUser.id || newUser.studentId;
-        console.log('Assigned studentId:', studentId.value, 'Types:', typeof studentId.value, 'Keys:', Object.keys(newUser));
         
         form.value.firstName = newUser.firstName || '';
         form.value.lastName = newUser.lastName || '';
@@ -294,7 +305,7 @@ const handleCvUpload = (event) => {
         cvFile.value = file;
         cvFileName.value = file.name;
     } else {
-        alert("Por favor, sube un archivo en formato PDF.");
+        notifications.warning("Por favor, sube un archivo en formato PDF para tu CV.");
         event.target.value = null;
     }
 };
@@ -305,7 +316,7 @@ const handleClUpload = (event) => {
         clFile.value = file;
         clFileName.value = file.name;
     } else {
-        alert("La carta de presentación debe ser un PDF.");
+        notifications.warning("La carta de presentación debe ser un PDF.");
         event.target.value = null;
     }
 };
@@ -316,41 +327,38 @@ const handlePhotoUpload = (event) => {
         photoFile.value = file;
         photoFileName.value = file.name;
     } else {
-        alert("La foto debe ser una imagen válida.");
+        notifications.warning("La foto debe ser una imagen válida (JPG/PNG).");
         event.target.value = null;
     }
 };
 
+
 const saveProfile = async () => {
-    // Usar el ID del store como fuente de verdad definitiva si el local falló
     const effectiveId = studentId.value || authStore.user?.id;
     
-    console.log('Attempting to save profile. studentId:', effectiveId, 'From store:', authStore.user?.id);
-    
     if (!effectiveId) {
-        console.error('Save aborted: No ID found. Store user:', authStore.user);
-        error.value = "No se ha podido identificar al estudiante. Prueba a recargar la página.";
+        notifications.error("No se ha podido identificar al estudiante. Prueba a recargar la página.");
         return;
     }
 
     // Validar motivación
     if (form.value.motivation.length < 100) {
-        error.value = "Tu motivación debe tener al menos 100 caracteres.";
+        notifications.warning("Tu motivación debe tener al menos 100 caracteres.");
         currentStep.value = 2;
         return;
     }
 
     // Validar keywords
     if (form.value.keywordIds.length === 0) {
-        error.value = "Debes seleccionar al menos una competencia tecnológica.";
+        notifications.warning("Debes seleccionar al menos una competencia tecnológica.");
         currentStep.value = 2;
         return;
     }
 
-    // Si no ha subido currículum paramos, a menos que ya tenga uno (checking documents list)
+    // Si no ha subido currículum paramos
     const hasExistingCv = authStore.user?.documents?.some(doc => doc.documentType === 'CV');
     if (!cvFile.value && !hasExistingCv && !authStore.user?.profileComplete) {
-        error.value = "Debes subir tu Currículum Vitae oficial para terminar (al menos una vez).";
+        notifications.warning("Debes subir tu Currículum Vitae oficial para finalizar.");
         currentStep.value = 3;
         return;
     }
@@ -359,7 +367,6 @@ const saveProfile = async () => {
     error.value = '';
     
     try {
-        // 2. Actualizar perfil
         await api.put(`/students/${effectiveId}/profile`, {
             firstName: form.value.firstName,
             lastName: form.value.lastName,
@@ -370,7 +377,6 @@ const saveProfile = async () => {
             countryPreferences: form.value.countryPreferences
         });
 
-        // 3. Subir Documentos
         const uploadDoc = async (file, type) => {
             const formData = new FormData();
             formData.append('file', file);
@@ -385,9 +391,9 @@ const saveProfile = async () => {
         if (clFile.value) await uploadDoc(clFile.value, 'COVER_LETTER');
         if (photoFile.value) await uploadDoc(photoFile.value, 'PHOTO');
         
+        notifications.success("¡Perfil completado con éxito! Bienvenido a BeDucation.");
         success.value = true;
         
-        // Refrescar perfil en el store para que sepa que está completo
         await authStore.fetchLocalUserProfile();
 
         setTimeout(() => {
@@ -395,10 +401,10 @@ const saveProfile = async () => {
         }, 1500);
 
     } catch(e) {
-        console.error("Error saving profile:", e);
-        error.value = e.message || "Ups, ha ocurrido un error conectando al sistema de guardado.";
+        notifications.error(e.message || "Error al sincronizar tu perfil.");
     } finally {
         loading.value = false;
     }
 };
+
 </script>

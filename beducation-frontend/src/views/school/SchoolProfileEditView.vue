@@ -83,13 +83,21 @@
 </template>
 
 <script setup>
+/**
+ * LÓGICA: Edición de Perfil Institucional
+ * --------------------------------------
+ * Permite a los gestores de centros educativos actualizar su información
+ * pública, datos de contacto y tipo de institución.
+ */
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../services/api';
+import { useNotificationStore } from '../../store/notifications';
 
 const router = useRouter();
-const isSaving = ref(false);
-const saveSuccess = ref(false);
+const notifications = useNotificationStore();
+const isSaving = ref(false);     // Estado de carga durante el guardado
+const saveSuccess = ref(false);   // Control de la notificación de éxito
 
 const profile = ref({
   id: null,
@@ -103,22 +111,25 @@ const profile = ref({
   contactPerson: ''
 });
 
+/**
+ * Carga inicial de datos de la escuela logueada.
+ * Utiliza el endpoint especial '/schools/me'.
+ */
 onMounted(async () => {
   try {
     const res = await api.get('/schools/me');
-    // res ya es la data directamente gracias al interceptor de axios en api.js
     profile.value = { ...res };
-    console.log("Perfil cargado:", profile.value);
   } catch (e) {
-    console.error("Error al cargar perfil:", e);
-    alert("No se pudo cargar la información del perfil.");
+    notifications.error("No se pudo cargar la información del perfil.");
   }
 });
 
+/**
+ * Persiste los cambios en el backend.
+ */
 const saveProfile = async () => {
   if (!profile.value.id && profile.value.id !== 0) {
-      // Si no tenemos ID, intentamos obtenerlo de nuevo o fallamos
-      alert("Error: No se encontró el ID de la escuela.");
+      notifications.error("Error: No se encontró el ID de la escuela.");
       return;
   }
 
@@ -126,18 +137,22 @@ const saveProfile = async () => {
   saveSuccess.value = false;
   
   try {
+    // El backend espera un objeto SchoolProfileDto
     await api.put(`/schools/${profile.value.id}`, profile.value);
     
+    notifications.success("Perfil institucional actualizado correctamente.");
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
       router.push('/school/dashboard');
     }, 1500);
   } catch (error) {
-    console.error("Error guardando perfil:", error);
-    alert("Hubo un error al guardar el perfil. " + (error.response?.data?.message || error.message));
+    console.error("Error al guardar perfil institucional:", error);
+    notifications.error(error.message || "Hubo un error al guardar el perfil.");
   } finally {
     isSaving.value = false;
   }
 };
 </script>
+
+

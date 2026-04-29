@@ -136,12 +136,19 @@
 
       <!-- GESTIÓN GLOBAL: ESTUDIANTES -->
       <div v-show="currentTab === 'control_estudiantes'" class="p-6">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h3 class="text-lg font-bold text-slate-800">Estudiantes</h3>
-            <button @click="showInviteForm = !showInviteForm" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                Invitar Alumno (Admin)
-            </button>
+            
+            <div class="flex flex-1 max-w-md w-full gap-2">
+                <div class="relative flex-1">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input v-model="searchQueryStudents" type="text" placeholder="Buscar por nombre o email..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 transition-all">
+                </div>
+                <button @click="showInviteForm = !showInviteForm" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                    Invitar
+                </button>
+            </div>
         </div>
 
         <!-- Formulario de Invitación -->
@@ -252,7 +259,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white">
-                    <tr v-for="std in allStudents" :key="std.id" class="border-b border-slate-100">
+                    <tr v-for="std in filteredStudents" :key="std.id" class="border-b border-slate-100">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-900">{{ std.firstName }} {{ std.lastName }}</div>
                             <div class="text-xs text-slate-400">{{ std.invitationEmail }}</div>
@@ -279,7 +286,13 @@
 
       <!-- GESTIÓN GLOBAL: ESCUELAS -->
       <div v-show="currentTab === 'control_escuelas'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Instituciones</h3>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-slate-800">Instituciones</h3>
+            <div class="relative w-64">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input v-model="searchQuerySchools" type="text" placeholder="Buscar escuela..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-4 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 transition-all">
+            </div>
+        </div>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-slate-800 uppercase text-xs border-b">
@@ -290,7 +303,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white">
-                    <tr v-for="item in allSchools" :key="item.id" class="border-b border-slate-100">
+                    <tr v-for="item in filteredSchools" :key="item.id" class="border-b border-slate-100">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-900">{{ item.name }}</div>
                             <div class="text-xs text-slate-400">{{ item.user?.email }}</div>
@@ -307,7 +320,13 @@
 
       <!-- GESTIÓN GLOBAL: EMPRESAS -->
       <div v-show="currentTab === 'control_empresas'" class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Empresas</h3>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-slate-800">Empresas</h3>
+            <div class="relative w-64">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input v-model="searchQueryCompanies" type="text" placeholder="Buscar empresa..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-4 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 transition-all">
+            </div>
+        </div>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-slate-800 uppercase text-xs border-b">
@@ -318,7 +337,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white">
-                    <tr v-for="item in allCompanies" :key="item.id" class="border-b border-slate-100">
+                    <tr v-for="item in filteredCompanies" :key="item.id" class="border-b border-slate-100">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-900">{{ item.name }}</div>
                             <a :href="item.website" target="_blank" class="text-xs text-primary-600">{{ item.user?.email }}</a>
@@ -431,8 +450,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+/**
+ * DASHBOARD DE ADMINISTRACIÓN (Control Global)
+ * --------------------------------------------
+ * Panel maestro para los administradores del sistema BeDucation.
+ * Centraliza la auditoría de:
+ * 1. Analíticas Globales: Seguimiento del pipeline desde aplicación hasta confirmación.
+ * 2. Validación de Cuentas: Aprobación de nuevas escuelas y empresas registradas.
+ * 3. Gestión de Estudiantes: Invitaciones individuales e importaciones masivas (CSV).
+ * 4. Control de Placements: Validación de la Etapa 4 previa a la firma del centro.
+ * 5. Accesos a Galería: Supervisión de permisos para fotos de eventos.
+ */
+import { ref, onMounted, watch, computed } from 'vue';
 import api from '../../services/api';
+import { useNotificationStore } from '../../store/notifications';
+
+const notifications = useNotificationStore();
+
+
 
 const currentTab = ref('escuelas');
 const tabs = ref([
@@ -476,6 +511,42 @@ const csvTargetSchoolId = ref('');
 const selectedCsvFile = ref(null);
 const csvPreview = ref([]);
 const pendingGalleryRequests = ref([]);
+
+// Search Queries
+const searchQueryStudents = ref('');
+const searchQuerySchools = ref('');
+const searchQueryCompanies = ref('');
+
+const filteredStudents = computed(() => {
+    const list = allStudents.value || [];
+    if (!searchQueryStudents.value) return list;
+    const query = searchQueryStudents.value.toLowerCase();
+    return list.filter(s => 
+        (s.firstName && s.firstName.toLowerCase().includes(query)) || 
+        (s.lastName && s.lastName.toLowerCase().includes(query)) ||
+        (s.invitationEmail && s.invitationEmail.toLowerCase().includes(query))
+    );
+});
+
+const filteredSchools = computed(() => {
+    const list = allSchools.value || [];
+    if (!searchQuerySchools.value) return list;
+    const query = searchQuerySchools.value.toLowerCase();
+    return list.filter(s => 
+        (s.name && s.name.toLowerCase().includes(query)) || 
+        (s.city && s.city.toLowerCase().includes(query))
+    );
+});
+
+const filteredCompanies = computed(() => {
+    const list = allCompanies.value || [];
+    if (!searchQueryCompanies.value) return list;
+    const query = searchQueryCompanies.value.toLowerCase();
+    return list.filter(c => 
+        (c.name && c.name.toLowerCase().includes(query)) || 
+        (c.sector && c.sector.toLowerCase().includes(query))
+    );
+});
 
 const fetchDashboardData = async () => {
     try {
@@ -531,17 +602,17 @@ watch(currentTab, fetchDashboardData);
 
 const submitInvitation = async () => {
     if (!inviteForm.value.email || !inviteForm.value.schoolId) {
-        alert("Email y Escuela son obligatorios.");
+        notifications.warning("Email y Escuela son obligatorios.");
         return;
     }
     try {
         await api.post('/admin/students/invite', null, { params: inviteForm.value });
-        alert("Invitación enviada con éxito.");
+        notifications.success("Invitación enviada con éxito.");
         showInviteForm.value = false;
         inviteForm.value = { firstName: '', lastName: '', email: '', schoolId: '' };
         fetchDashboardData();
     } catch (err) {
-        alert(err.message || "Error al invitar al alumno.");
+        notifications.error(err.message || "Error al invitar al alumno.");
     }
 };
 
@@ -610,11 +681,11 @@ const submitBulkImport = async () => {
             params: { schoolId: csvTargetSchoolId.value },
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        alert(`Éxito: ${csvPreview.value.length} estudiantes invitados.`);
+        notifications.success(`Éxito: ${csvPreview.value.length} estudiantes invitados.`);
         resetCsv();
         fetchDashboardData();
     } catch (err) {
-        alert(err.response?.data?.message || "Error en la importación masiva.");
+        notifications.error(err.response?.data?.message || "Error en la importación masiva.");
     } finally {
         isImporting.value = false;
     }

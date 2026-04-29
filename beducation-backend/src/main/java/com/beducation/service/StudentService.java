@@ -15,19 +15,21 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ============================================================
- * Servicio: StudentService
- * ============================================================
- * Maneja el onboarding inicial de los estudiantes invitados, la 
- * gestión de su perfil, subir documentos del CV y calcula
- * la variable ProfileComplete, requerida para poder aplicar.
- * ============================================================
+ * SERVICIO: StudentService
+ * ------------------------
+ * Orquestador de la lógica de negocio para los Estudiantes.
+ * Responsabilidades:
+ * - Onboarding y validación de perfil completo (Motivation, Keywords, CV...).
+ * - Gestión de documentos con almacenamiento en AWS S3.
+ * - Sincronización de usuarios Auth0 con perfiles de invitación.
+ * - Registro atómico de invitaciones individuales.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class StudentService {
+
 
     private final StudentRepository studentRepository;
     private final StudentDocumentRepository studentDocumentRepository;

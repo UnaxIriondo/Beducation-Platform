@@ -92,6 +92,12 @@ const routes = [
         component: () => import('../views/company/OpportunityCandidatesView.vue'),
         meta: { requiresAuth: true, role: 'COMPANY' }
     },
+    {
+        path: '/company/profile/edit',
+        name: 'CompanyProfileEdit',
+        component: () => import('../views/company/CompanyProfileEditView.vue'),
+        meta: { requiresAuth: true, role: 'COMPANY' }
+    },
     // Portal Admin
     {
         path: '/admin/dashboard',

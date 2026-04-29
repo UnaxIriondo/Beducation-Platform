@@ -6,6 +6,7 @@ import com.beducation.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -13,28 +14,34 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
- * ============================================================
- * Controlador de Desarrollo: DebugController (Versión Limpia)
- * ============================================================
- * Proporciona login rápido y herramientas de limpieza para desarrollo.
- * ============================================================
+ * CONTROLADOR DE DESARROLLO: DebugController
+ * -----------------------------------------
+ * ATENCIÓN: Este controlador contiene atajos de seguridad y herramientas 
+ * de limpieza de base de datos exclusivas para el desarrollo local.
+ * 
+ * Este componente SOLO se carga si el perfil activo NO es 'prod'.
  */
 @RestController
 @RequestMapping("/debug")
 @RequiredArgsConstructor
-@Tag(name = "Development / Debug Tools", description = "Herramientas de desarrollo (Login y Reset).")
+@Profile("!prod")
+@Tag(name = "Development Tools", description = "Endpoints de utilidad para agilizar el desarrollo y pruebas locales.")
 public class DebugController {
+
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final SchoolRepository schoolRepository;
     private final CompanyRepository companyRepository;
     private final OpportunityRepository opportunityRepository;
+
     private final ApplicationRepository applicationRepository;
     private final StudentService studentService;
 
     @PostMapping("/reset-database")
+
     @Transactional
     @Operation(summary = "LIMPIAR TODA LA BD (Solo Dev)", description = "Borra aplicaciones, ofertas, alumnos, empresas y centros de la base de datos.")
     public ResponseEntity<?> resetDatabase() {
@@ -52,7 +59,7 @@ public class DebugController {
     }
 
     @GetMapping("/login")
-    @Operation(summary = "Login rápido por email (Sin contraseña)", description = "Busca al usuario por email. Si no existe, lo crea con un rol básico sin datos extra.")
+    @Operation(summary = "Login rápido por email (Sin contraseña)", description = "Busca al usuario por email o crea uno nuevo. Retorna un JWT firmado localmente para bypass de Auth0.")
     public ResponseEntity<?> loginByEmail(@RequestParam String email) {
         final String trimmedEmail = email.trim();
         
